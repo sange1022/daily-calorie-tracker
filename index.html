@@ -3,6 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="data:," />
     <title>每日卡路里记录</title>
     <style>
       :root {
@@ -170,6 +171,45 @@
         grid-template-columns: repeat(4, minmax(0, 1fr));
         gap: 10px;
         margin-bottom: 14px;
+      }
+
+      .sync-row {
+        display: grid;
+        grid-template-columns: minmax(180px, 1fr) auto auto;
+        gap: 8px;
+        align-items: end;
+        border-top: 1px solid var(--line);
+        margin-top: 12px;
+        padding-top: 12px;
+      }
+
+      .sync-field {
+        position: relative;
+      }
+
+      .sync-field input {
+        padding-right: 92px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        letter-spacing: 0;
+        text-transform: uppercase;
+      }
+
+      .sync-status {
+        position: absolute;
+        right: 9px;
+        bottom: 11px;
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 900;
+        pointer-events: none;
+      }
+
+      .sync-status[data-state="synced"] {
+        color: var(--protein);
+      }
+
+      .sync-status[data-state="error"] {
+        color: var(--danger);
       }
 
       .metric-cards {
@@ -657,7 +697,8 @@
         }
 
         .daily-grid,
-        .library-form {
+        .library-form,
+        .sync-row {
           grid-template-columns: repeat(2, minmax(0, 1fr));
           gap: 8px;
         }
@@ -665,7 +706,8 @@
         .daily-grid label:first-child,
         .daily-grid .btn,
         .library-form label:first-child,
-        .library-form .btn {
+        .library-form .btn,
+        .sync-field {
           grid-column: 1 / -1;
         }
 
@@ -774,6 +816,20 @@
             </label>
           </div>
           <div class="metric-cards" id="metrics"></div>
+          <div class="sync-row">
+            <label class="sync-field">
+              <span class="field-label">云同步码</span>
+              <input
+                id="syncCode"
+                maxlength="24"
+                autocomplete="off"
+                placeholder="在其他设备输入同一个同步码"
+              />
+              <span class="sync-status" id="syncStatus" data-state="local">仅本地</span>
+            </label>
+            <button class="btn" id="createSyncCode" type="button">新建同步码</button>
+            <button class="btn primary" id="connectSync" type="button">连接同步</button>
+          </div>
         </div>
       </section>
 
@@ -868,8 +924,36 @@
       </section>
     </main>
 
-    <script>
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
+      import {
+        getAuth,
+        onAuthStateChanged,
+        signInAnonymously,
+      } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
+      import {
+        doc,
+        getDoc,
+        getFirestore,
+        onSnapshot,
+        serverTimestamp,
+        setDoc,
+      } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyDbLCcDs-Gk6ev2zSUT4cdYAgvpqUzSUEY",
+        authDomain: "daily-calorie-tracker-3ec47.firebaseapp.com",
+        projectId: "daily-calorie-tracker-3ec47",
+        storageBucket: "daily-calorie-tracker-3ec47.firebasestorage.app",
+        messagingSenderId: "197589959166",
+        appId: "1:197589959166:web:711ca2487ef48c9c42c0af",
+      };
+
       const storeKey = "calorie-tracker-v1";
+      const syncCodeKey = `${storeKey}-sync-code`;
+      const firebaseApp = initializeApp(firebaseConfig);
+      const auth = getAuth(firebaseApp);
+      const db = getFirestore(firebaseApp);
       const today = new Date();
       const pad = (value) => String(value).padStart(2, "0");
       const toDateKey = (date) =>
@@ -925,6 +1009,11 @@
       let state = loadState();
       let selectedDate = toDateKey(today);
       let visibleMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+      let authReady = false;
+      let activeSyncCode = "";
+      let stopCloudListener = null;
+      let cloudSaveTimer = null;
+      let applyingCloudState = false;
 
       const els = {
         selectedDate: document.querySelector("#selectedDate"),
@@ -958,6 +1047,10 @@
         importData: document.querySelector("#importData"),
         importFile: document.querySelector("#importFile"),
         resetAll: document.querySelector("#resetAll"),
+        syncCode: document.querySelector("#syncCode"),
+        syncStatus: document.querySelector("#syncStatus"),
+        createSyncCode: document.querySelector("#createSyncCode"),
+        connectSync: document.querySelector("#connectSync"),
       };
 
       function loadState() {
@@ -972,6 +1065,110 @@
 
       function saveState() {
         localStorage.setItem(storeKey, JSON.stringify(state));
+        if (!applyingCloudState) scheduleCloudSave();
+      }
+
+      function cleanSyncCode(value) {
+        return String(value || "")
+          .toUpperCase()
+          .replace(/[^A-Z0-9]/g, "")
+          .slice(0, 24);
+      }
+
+      function generateSyncCode() {
+        const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+        const bytes = crypto.getRandomValues(new Uint8Array(20));
+        return Array.from(bytes, (byte) => alphabet[byte % alphabet.length]).join("");
+      }
+
+      function setSyncStatus(text, status = "local") {
+        els.syncStatus.textContent = text;
+        els.syncStatus.dataset.state = status;
+      }
+
+      function scheduleCloudSave() {
+        if (!authReady || !activeSyncCode) return;
+        clearTimeout(cloudSaveTimer);
+        setSyncStatus("同步中");
+        cloudSaveTimer = setTimeout(pushStateToCloud, 700);
+      }
+
+      async function pushStateToCloud() {
+        if (!authReady || !activeSyncCode) return;
+        try {
+          await setDoc(doc(db, "syncSpaces", activeSyncCode), {
+            data: structuredClone(state),
+            updatedAt: serverTimestamp(),
+          });
+          setSyncStatus("已同步", "synced");
+        } catch (error) {
+          console.error("Cloud sync failed", error);
+          setSyncStatus(navigator.onLine ? "同步失败" : "离线", "error");
+        }
+      }
+
+      async function connectCloudSync(code, createIfMissing = true) {
+        const normalized = cleanSyncCode(code);
+        if (normalized.length < 12) {
+          alert("同步码至少需要 12 位。");
+          return;
+        }
+        if (!authReady) {
+          els.syncCode.value = normalized;
+          localStorage.setItem(syncCodeKey, normalized);
+          setSyncStatus("正在连接");
+          return;
+        }
+
+        stopCloudListener?.();
+        activeSyncCode = normalized;
+        els.syncCode.value = normalized;
+        localStorage.setItem(syncCodeKey, normalized);
+        setSyncStatus("连接中");
+
+        const syncRef = doc(db, "syncSpaces", normalized);
+        try {
+          const snapshot = await getDoc(syncRef);
+          if (snapshot.exists()) {
+            const remoteState = normalizeImportedState(snapshot.data().data);
+            if (remoteState) {
+              applyingCloudState = true;
+              state = remoteState;
+              localStorage.setItem(storeKey, JSON.stringify(state));
+              renderAll();
+              applyingCloudState = false;
+            }
+          } else if (createIfMissing) {
+            await setDoc(syncRef, {
+              data: structuredClone(state),
+              updatedAt: serverTimestamp(),
+            });
+          }
+
+          stopCloudListener = onSnapshot(
+            syncRef,
+            (cloudSnapshot) => {
+              if (!cloudSnapshot.exists()) return;
+              const remoteState = normalizeImportedState(cloudSnapshot.data().data);
+              if (!remoteState) return;
+              applyingCloudState = true;
+              state = remoteState;
+              localStorage.setItem(storeKey, JSON.stringify(state));
+              renderAll();
+              applyingCloudState = false;
+              setSyncStatus("已同步", "synced");
+            },
+            (error) => {
+              console.error("Cloud listener failed", error);
+              setSyncStatus("同步失败", "error");
+            },
+          );
+          setSyncStatus("已同步", "synced");
+        } catch (error) {
+          console.error("Cloud connection failed", error);
+          activeSyncCode = "";
+          setSyncStatus(navigator.onLine ? "连接失败" : "离线", "error");
+        }
       }
 
       function normalizeImportedState(data) {
@@ -1452,6 +1649,46 @@
         state = structuredClone(defaults);
         saveState();
         renderAll();
+      });
+
+      els.syncCode.addEventListener("input", () => {
+        els.syncCode.value = cleanSyncCode(els.syncCode.value);
+      });
+
+      els.createSyncCode.addEventListener("click", () => {
+        const code = generateSyncCode();
+        els.syncCode.value = code;
+        connectCloudSync(code);
+      });
+
+      els.connectSync.addEventListener("click", () => {
+        connectCloudSync(els.syncCode.value);
+      });
+
+      window.addEventListener("online", () => {
+        if (activeSyncCode) scheduleCloudSave();
+      });
+
+      window.addEventListener("offline", () => {
+        if (activeSyncCode) setSyncStatus("离线", "error");
+      });
+
+      onAuthStateChanged(auth, async (user) => {
+        if (!user) {
+          try {
+            await signInAnonymously(auth);
+          } catch (error) {
+            console.error("Anonymous sign-in failed", error);
+            setSyncStatus("云端不可用", "error");
+          }
+          return;
+        }
+        authReady = true;
+        const savedCode = cleanSyncCode(localStorage.getItem(syncCodeKey));
+        if (savedCode) {
+          els.syncCode.value = savedCode;
+          connectCloudSync(savedCode);
+        }
       });
 
       renderAll();
