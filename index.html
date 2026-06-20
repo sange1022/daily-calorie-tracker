@@ -1,0 +1,1460 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>每日卡路里记录</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f6f7f3;
+        --panel: #ffffff;
+        --ink: #17202a;
+        --muted: #667085;
+        --line: #d9ded6;
+        --soft: #eef2ec;
+        --carb: #2f80ed;
+        --protein: #169b72;
+        --fat: #d97904;
+        --danger: #c84630;
+        --shadow: 0 5px 18px rgba(22, 32, 42, 0.06);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        min-height: 100vh;
+        margin: 0;
+        font-family:
+          Inter, "PingFang SC", "Microsoft YaHei", system-ui, -apple-system,
+          BlinkMacSystemFont, "Segoe UI", sans-serif;
+        color: var(--ink);
+        background:
+          linear-gradient(180deg, rgba(255, 255, 255, 0.8), transparent 280px),
+          var(--bg);
+      }
+
+      button,
+      input,
+      select {
+        font: inherit;
+      }
+
+      button {
+        cursor: pointer;
+      }
+
+      main {
+        width: min(1180px, calc(100% - 28px));
+        margin: 0 auto;
+        padding: 20px 0 32px;
+      }
+
+      .topbar {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 16px;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 36px;
+        line-height: 1.1;
+        letter-spacing: 0;
+      }
+
+      .subtitle {
+        max-width: 700px;
+        margin: 5px 0 0;
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.45;
+      }
+
+      .date-picker {
+        display: grid;
+        gap: 6px;
+        min-width: 190px;
+      }
+
+      .field-label,
+      .small-title {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      input,
+      select {
+        width: 100%;
+        min-height: 38px;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        padding: 8px 10px;
+        color: var(--ink);
+        background: #fff;
+      }
+
+      input[type="number"] {
+        appearance: textfield;
+      }
+
+      input:focus-visible,
+      select:focus-visible,
+      button:focus-visible,
+      [contenteditable="true"]:focus-visible {
+        outline: 3px solid rgba(47, 128, 237, 0.22);
+        outline-offset: 2px;
+      }
+
+      [contenteditable="true"] {
+        border-radius: 6px;
+        cursor: text;
+      }
+
+      [contenteditable="true"]:focus {
+        background: rgba(47, 128, 237, 0.08);
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.75fr);
+        gap: 14px;
+        align-items: start;
+      }
+
+      .layout > * {
+        min-width: 0;
+      }
+
+      .panel {
+        min-width: 0;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        box-shadow: var(--shadow);
+      }
+
+      .panel-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        border-bottom: 1px solid var(--line);
+        padding: 12px 14px;
+      }
+
+      .panel-head h2 {
+        margin: 0;
+        font-size: 18px;
+        letter-spacing: 0;
+      }
+
+      .panel-actions {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 8px;
+      }
+
+      .panel-body {
+        padding: 14px;
+      }
+
+      .settings-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+        margin-bottom: 14px;
+      }
+
+      .metric-cards {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .metric {
+        min-width: 0;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 10px 11px;
+        background: var(--soft);
+      }
+
+      .metric strong {
+        display: block;
+        margin-top: 6px;
+        font-size: 24px;
+        line-height: 1;
+      }
+
+      .metric span {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .bar {
+        height: 6px;
+        margin-top: 8px;
+        border-radius: 99px;
+        background: #dfe5dd;
+        overflow: hidden;
+      }
+
+      .bar i {
+        display: block;
+        width: var(--value);
+        height: 100%;
+        border-radius: inherit;
+        background: var(--color);
+      }
+
+      .daily-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 140px 140px 92px;
+        gap: 10px;
+        align-items: end;
+      }
+
+      .quick-add {
+        border: 1px solid rgba(31, 118, 223, 0.26);
+        border-left: 5px solid #1f76df;
+        border-radius: 8px;
+        padding: 12px;
+        background: #f2f7ff;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+        margin-bottom: 14px;
+      }
+
+      .quick-add-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 10px;
+      }
+
+      .quick-add-title strong {
+        font-size: 15px;
+        line-height: 1.2;
+      }
+
+      .quick-add-title span {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .record-area {
+        border-top: 1px solid var(--line);
+        padding-top: 14px;
+      }
+
+      .date-nav {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 8px;
+      }
+
+      .meal-summary {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+        margin-top: 14px;
+      }
+
+      .meal-box {
+        min-width: 0;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 9px;
+        background: #f8faf7;
+      }
+
+      .meal-box h3 {
+        margin: 0 0 8px;
+        font-size: 15px;
+        letter-spacing: 0;
+      }
+
+      .meal-list {
+        display: grid;
+        gap: 6px;
+        min-height: 28px;
+      }
+
+      .meal-item {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto auto;
+        align-items: center;
+        gap: 8px;
+        border-bottom: 1px solid rgba(217, 222, 214, 0.8);
+        padding-bottom: 6px;
+        color: var(--ink);
+        font-size: 13px;
+        font-weight: 800;
+      }
+
+      .meal-item span {
+        min-width: 0;
+        overflow-wrap: anywhere;
+      }
+
+      .meal-item small,
+      .meal-total {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 900;
+        white-space: nowrap;
+      }
+
+      .mini-delete {
+        min-height: 26px;
+        border: 1px solid rgba(200, 70, 48, 0.28);
+        border-radius: 6px;
+        padding: 3px 7px;
+        color: var(--danger);
+        background: #fff;
+        font-size: 12px;
+        font-weight: 900;
+      }
+
+      .meal-total {
+        display: block;
+        margin-top: 8px;
+      }
+
+      .btn {
+        min-height: 38px;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        padding: 8px 12px;
+        color: var(--ink);
+        background: #fff;
+        font-weight: 800;
+      }
+
+      .btn.primary {
+        border-color: #1c6bc7;
+        color: #fff;
+        background: #1f76df;
+      }
+
+      .btn.danger {
+        color: var(--danger);
+      }
+
+      .table-wrap {
+        min-width: 0;
+        max-width: 100%;
+        overflow-x: auto;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 820px;
+      }
+
+      th,
+      td {
+        border-bottom: 1px solid var(--line);
+        padding: 8px;
+        text-align: left;
+        vertical-align: middle;
+      }
+
+      th {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 900;
+        white-space: nowrap;
+      }
+
+      td input {
+        min-height: 34px;
+        padding: 6px 8px;
+      }
+
+      .food-name {
+        min-width: 150px;
+      }
+
+      .num {
+        width: 92px;
+      }
+
+      .meal-cell {
+        min-width: 92px;
+      }
+
+      .row-total {
+        min-width: 82px;
+        font-weight: 900;
+      }
+
+      tfoot td {
+        background: #f8faf7;
+        font-weight: 900;
+      }
+
+      .empty {
+        border: 1px dashed var(--line);
+        border-radius: 8px;
+        padding: 18px;
+        color: var(--muted);
+        text-align: center;
+        font-weight: 800;
+      }
+
+      .library-form {
+        display: grid;
+        grid-template-columns: minmax(140px, 1.2fr) repeat(4, minmax(72px, 0.75fr)) 84px;
+        gap: 8px;
+        align-items: end;
+        margin-bottom: 12px;
+      }
+
+      .library-list {
+        display: grid;
+        gap: 8px;
+        max-height: 340px;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        scrollbar-gutter: stable;
+        padding-right: 4px;
+      }
+
+      .library-item {
+        display: grid;
+        grid-template-columns: minmax(120px, 1fr) repeat(4, minmax(58px, 0.5fr)) 72px;
+        gap: 8px;
+        align-items: center;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 8px;
+        background: #fff;
+      }
+
+      .library-item b,
+      .library-item span {
+        min-width: 0;
+        overflow-wrap: anywhere;
+      }
+
+      .library-item span {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .calendar-head {
+        display: grid;
+        grid-template-columns: 30px 1fr 30px;
+        gap: 6px;
+        align-items: center;
+      }
+
+      .icon-btn {
+        width: 30px;
+        height: 30px;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        background: #fff;
+        color: var(--ink);
+        font-size: 15px;
+        font-weight: 900;
+      }
+
+      .month-title {
+        text-align: center;
+        font-size: 15px;
+        font-weight: 900;
+      }
+
+      .calendar {
+        display: grid;
+        grid-template-columns: repeat(7, minmax(0, 1fr));
+        gap: 4px;
+      }
+
+      .weekday {
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 900;
+        text-align: center;
+      }
+
+      .day {
+        min-height: 48px;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        padding: 5px;
+        background: #fff;
+        text-align: left;
+      }
+
+      .day.muted {
+        opacity: 0.38;
+      }
+
+      .day.active {
+        border-color: #1f76df;
+        box-shadow: inset 0 0 0 2px rgba(31, 118, 223, 0.18);
+      }
+
+      .day-number {
+        display: block;
+        font-size: 12px;
+        font-weight: 900;
+      }
+
+      .day-kcal {
+        display: block;
+        margin-top: 5px;
+        color: var(--fat);
+        font-size: 11px;
+        font-weight: 900;
+      }
+
+      .day-items {
+        display: block;
+        margin-top: 1px;
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 800;
+      }
+
+      .actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        margin-top: 12px;
+      }
+
+      .calendar-panel {
+        align-self: start;
+      }
+
+      .calendar-panel .panel-body {
+        padding: 12px;
+      }
+
+      .calendar-panel .day {
+        min-height: 40px;
+      }
+
+      @media (max-width: 920px) {
+        .topbar,
+        .layout {
+          grid-template-columns: 1fr;
+          display: grid;
+        }
+
+        .settings-grid,
+        .metric-cards {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .daily-grid,
+        .library-form {
+          grid-template-columns: 1fr 1fr;
+        }
+
+        .calendar-panel {
+          margin-top: 14px;
+        }
+
+        .library-form .btn {
+          grid-column: span 2;
+        }
+      }
+
+      @media (max-width: 620px) {
+        main {
+          width: min(100% - 16px, 1180px);
+          padding-top: 12px;
+        }
+
+        .topbar {
+          gap: 12px;
+          margin-bottom: 12px;
+        }
+
+        h1 {
+          font-size: 29px;
+        }
+
+        .subtitle {
+          font-size: 13px;
+        }
+
+        .panel-head {
+          align-items: center;
+          padding: 11px 12px;
+        }
+
+        .panel-head h2 {
+          font-size: 17px;
+        }
+
+        .goal-panel .panel-head {
+          align-items: stretch;
+          flex-direction: column;
+        }
+
+        .panel-actions {
+          width: 100%;
+          justify-content: start;
+        }
+
+        .panel-actions .btn {
+          flex: 1 1 auto;
+          padding-inline: 8px;
+        }
+
+        .panel-body {
+          padding: 12px;
+        }
+
+        .date-nav {
+          gap: 5px;
+        }
+
+        .date-nav .btn {
+          min-height: 34px;
+          padding: 6px 8px;
+          font-size: 13px;
+        }
+
+        .date-nav .small-title {
+          font-size: 11px;
+        }
+
+        .settings-grid,
+        .metric-cards {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 8px;
+        }
+
+        .settings-grid {
+          margin-bottom: 10px;
+        }
+
+        .metric {
+          padding: 9px;
+        }
+
+        .metric strong {
+          font-size: 20px;
+        }
+
+        .daily-grid,
+        .library-form {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 8px;
+        }
+
+        .daily-grid label:first-child,
+        .daily-grid .btn,
+        .library-form label:first-child,
+        .library-form .btn {
+          grid-column: 1 / -1;
+        }
+
+        .quick-add-title span {
+          display: none;
+        }
+
+        .meal-summary {
+          grid-template-columns: 1fr;
+          gap: 8px;
+        }
+
+        .meal-box {
+          display: grid;
+          grid-template-columns: 46px minmax(0, 1fr);
+          column-gap: 8px;
+          align-items: start;
+        }
+
+        .meal-box h3 {
+          grid-row: 1 / 3;
+          margin: 2px 0 0;
+        }
+
+        .meal-total {
+          margin-top: 5px;
+        }
+
+        .library-item {
+          grid-template-columns: minmax(90px, 1fr) repeat(2, auto);
+          gap: 5px 8px;
+        }
+
+        .library-item b {
+          grid-row: span 2;
+        }
+
+        .library-item .btn {
+          grid-column: 3;
+          grid-row: 1 / 3;
+          min-height: 32px;
+          padding: 5px 8px;
+        }
+
+        .library-list {
+          max-height: min(300px, 46vh);
+        }
+
+        .calendar {
+          gap: 3px;
+        }
+
+        .day {
+          min-height: 44px;
+          padding: 4px;
+        }
+
+        .day-kcal {
+          font-size: 10px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header class="topbar">
+        <div>
+          <h1 data-label="title" contenteditable="true">每日卡路里记录</h1>
+          <p class="subtitle" data-label="subtitle" contenteditable="true">
+            输入体重后自动计算每日目标，添加食物后自动汇总当天碳水、蛋白质、脂肪和热量。
+          </p>
+        </div>
+        <label class="date-picker">
+          <span class="field-label" data-label="dateLabel" contenteditable="true">记录日期</span>
+          <input id="selectedDate" type="date" />
+        </label>
+      </header>
+
+      <section class="panel goal-panel" aria-label="目标设置">
+        <div class="panel-head">
+          <h2 data-label="goalTitle" contenteditable="true">每日目标</h2>
+          <div class="panel-actions">
+            <button class="btn" id="exportData" type="button">导出数据</button>
+            <button class="btn" id="importData" type="button">导入数据</button>
+            <button class="btn danger" id="resetAll" type="button">重置示例数据</button>
+          </div>
+          <input id="importFile" type="file" accept="application/json,.json" hidden />
+        </div>
+        <div class="panel-body">
+          <div class="settings-grid">
+            <label>
+              <span class="field-label" data-label="weightLabel" contenteditable="true">体重 kg</span>
+              <input id="weight" type="number" min="0" step="0.1" />
+            </label>
+            <label>
+              <span class="field-label" data-label="carbRuleLabel" contenteditable="true">碳水系数</span>
+              <input id="carbFactor" type="number" min="0" step="0.1" />
+            </label>
+            <label>
+              <span class="field-label" data-label="proteinRuleLabel" contenteditable="true">蛋白质系数</span>
+              <input id="proteinFactor" type="number" min="0" step="0.1" />
+            </label>
+            <label>
+              <span class="field-label" data-label="fatRuleLabel" contenteditable="true">脂肪系数</span>
+              <input id="fatFactor" type="number" min="0" step="0.1" />
+            </label>
+          </div>
+          <div class="metric-cards" id="metrics"></div>
+        </div>
+      </section>
+
+      <div class="layout" style="margin-top: 14px">
+        <section class="panel">
+          <div class="panel-head">
+            <h2 data-label="dailyTitle" contenteditable="true">当日食物记录</h2>
+            <div class="date-nav">
+              <button class="btn" id="prevDay" type="button">前一天</button>
+              <span class="small-title" id="activeDateText"></span>
+              <button class="btn" id="nextDay" type="button">后一天</button>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="quick-add">
+              <div class="quick-add-title">
+                <strong>快速添加</strong>
+                <span>从食物库选择后加入当天记录</span>
+              </div>
+              <div class="daily-grid">
+                <label>
+                  <span class="field-label" data-label="chooseFoodLabel" contenteditable="true">从食物库添加</span>
+                  <select id="foodSelect"></select>
+                </label>
+                <label>
+                  <span class="field-label">餐次</span>
+                  <select id="mealSelect"></select>
+                </label>
+                <label>
+                  <span class="field-label" data-label="portionLabel" contenteditable="true">份数</span>
+                  <input id="portion" type="number" min="0" step="0.5" value="1" />
+                </label>
+                <button class="btn primary" id="addDailyFood" type="button">添加</button>
+              </div>
+            </div>
+            <div class="record-area">
+              <div id="dailyTable"></div>
+              <div class="meal-summary" id="mealSummary"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel calendar-panel">
+          <div class="panel-head">
+            <h2 data-label="calendarTitle" contenteditable="true">月历热量</h2>
+          </div>
+          <div class="panel-body">
+            <div class="calendar-head">
+              <button class="icon-btn" id="prevMonth" type="button" aria-label="上个月">&lt;</button>
+              <div class="month-title" id="monthTitle"></div>
+              <button class="icon-btn" id="nextMonth" type="button" aria-label="下个月">&gt;</button>
+            </div>
+            <div class="calendar" id="calendar" style="margin-top: 12px"></div>
+            <div class="actions">
+              <button class="btn" id="todayBtn" type="button">回到今天</button>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <section class="panel" style="margin-top: 14px">
+        <div class="panel-head">
+          <h2 data-label="libraryTitle" contenteditable="true">食物项目库</h2>
+          <span class="small-title" data-label="libraryHint" contenteditable="true">每项数字都可自定义</span>
+        </div>
+        <div class="panel-body">
+          <div class="library-form">
+            <label>
+              <span class="field-label">名称</span>
+              <input id="newName" value="鸡蛋" />
+            </label>
+            <label>
+              <span class="field-label">碳水 g</span>
+              <input id="newCarb" type="number" step="0.1" value="2" />
+            </label>
+            <label>
+              <span class="field-label">蛋白质 g</span>
+              <input id="newProtein" type="number" step="0.1" value="7" />
+            </label>
+            <label>
+              <span class="field-label">脂肪 g</span>
+              <input id="newFat" type="number" step="0.1" value="5" />
+            </label>
+            <label>
+              <span class="field-label">热量 kcal</span>
+              <input id="newKcal" type="number" step="1" value="70" />
+            </label>
+            <button class="btn primary" id="addLibraryFood" type="button">新增</button>
+          </div>
+          <div class="library-list" id="libraryList"></div>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const storeKey = "calorie-tracker-v1";
+      const today = new Date();
+      const pad = (value) => String(value).padStart(2, "0");
+      const toDateKey = (date) =>
+        `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+      const dateKeyToDate = (key) => {
+        const [year, month, day] = key.split("-").map(Number);
+        return new Date(year, month - 1, day);
+      };
+      const uid = () => `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      const numberValue = (value) => Number.parseFloat(value) || 0;
+      const format = (value, digits = 1) => {
+        const fixed = Number(value || 0).toFixed(digits);
+        return fixed.replace(/\.0$/, "");
+      };
+      const meals = [
+        { id: "morning", name: "早上" },
+        { id: "noon", name: "中午" },
+        { id: "evening", name: "晚上" },
+      ];
+
+      const defaults = {
+        labels: {
+          title: "每日卡路里记录",
+          subtitle:
+            "输入体重后自动计算每日目标，添加食物后自动汇总当天碳水、蛋白质、脂肪和热量。",
+          dateLabel: "记录日期",
+          goalTitle: "每日目标",
+          weightLabel: "体重 kg",
+          carbRuleLabel: "碳水系数",
+          proteinRuleLabel: "蛋白质系数",
+          fatRuleLabel: "脂肪系数",
+          dailyTitle: "当日食物记录",
+          chooseFoodLabel: "从食物库添加",
+          portionLabel: "份数",
+          libraryTitle: "食物项目库",
+          libraryHint: "每项数字都可自定义",
+          calendarTitle: "月历热量",
+        },
+        settings: {
+          weight: 90,
+          carbFactor: 2.5,
+          proteinFactor: 1.6,
+          fatFactor: 0.9,
+        },
+        library: [
+          { id: uid(), name: "鸡蛋", carb: 2, protein: 7, fat: 5, kcal: 70 },
+          { id: uid(), name: "米饭", carb: 26, protein: 2.6, fat: 0.3, kcal: 116 },
+          { id: uid(), name: "鸡胸肉", carb: 0, protein: 24, fat: 2.6, kcal: 120 },
+        ],
+        days: {},
+      };
+
+      let state = loadState();
+      let selectedDate = toDateKey(today);
+      let visibleMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+
+      const els = {
+        selectedDate: document.querySelector("#selectedDate"),
+        weight: document.querySelector("#weight"),
+        carbFactor: document.querySelector("#carbFactor"),
+        proteinFactor: document.querySelector("#proteinFactor"),
+        fatFactor: document.querySelector("#fatFactor"),
+        metrics: document.querySelector("#metrics"),
+        activeDateText: document.querySelector("#activeDateText"),
+        foodSelect: document.querySelector("#foodSelect"),
+        mealSelect: document.querySelector("#mealSelect"),
+        portion: document.querySelector("#portion"),
+        addDailyFood: document.querySelector("#addDailyFood"),
+        dailyTable: document.querySelector("#dailyTable"),
+        mealSummary: document.querySelector("#mealSummary"),
+        newName: document.querySelector("#newName"),
+        newCarb: document.querySelector("#newCarb"),
+        newProtein: document.querySelector("#newProtein"),
+        newFat: document.querySelector("#newFat"),
+        newKcal: document.querySelector("#newKcal"),
+        addLibraryFood: document.querySelector("#addLibraryFood"),
+        libraryList: document.querySelector("#libraryList"),
+        calendar: document.querySelector("#calendar"),
+        monthTitle: document.querySelector("#monthTitle"),
+        prevMonth: document.querySelector("#prevMonth"),
+        nextMonth: document.querySelector("#nextMonth"),
+        todayBtn: document.querySelector("#todayBtn"),
+        prevDay: document.querySelector("#prevDay"),
+        nextDay: document.querySelector("#nextDay"),
+        exportData: document.querySelector("#exportData"),
+        importData: document.querySelector("#importData"),
+        importFile: document.querySelector("#importFile"),
+        resetAll: document.querySelector("#resetAll"),
+      };
+
+      function loadState() {
+        try {
+          const saved = JSON.parse(localStorage.getItem(storeKey));
+          if (!saved) return structuredClone(defaults);
+          return normalizeImportedState(saved) || structuredClone(defaults);
+        } catch {
+          return structuredClone(defaults);
+        }
+      }
+
+      function saveState() {
+        localStorage.setItem(storeKey, JSON.stringify(state));
+      }
+
+      function normalizeImportedState(data) {
+        if (!data || typeof data !== "object") return null;
+        const imported = data.app === storeKey && data.data ? data.data : data;
+        if (!imported || typeof imported !== "object") return null;
+        if (!imported.settings || !Array.isArray(imported.library) || !imported.days) return null;
+        return {
+          ...structuredClone(defaults),
+          ...imported,
+          labels: { ...defaults.labels, ...(imported.labels || {}) },
+          settings: { ...defaults.settings, ...imported.settings },
+          library: imported.library.map((item) => ({
+            id: item.id || uid(),
+            name: String(item.name || "未命名食物"),
+            carb: numberValue(item.carb),
+            protein: numberValue(item.protein),
+            fat: numberValue(item.fat),
+            kcal: numberValue(item.kcal),
+          })),
+          days: Object.fromEntries(
+            Object.entries(imported.days || {}).map(([date, rows]) => [
+              date,
+              Array.isArray(rows)
+                ? rows.map((row) => ({
+                    id: row.id || uid(),
+                    meal: meals.some((meal) => meal.id === row.meal) ? row.meal : "morning",
+                    name: String(row.name || "未命名食物"),
+                    carb: numberValue(row.carb),
+                    protein: numberValue(row.protein),
+                    fat: numberValue(row.fat),
+                    kcal: numberValue(row.kcal),
+                  }))
+                : [],
+            ]),
+          ),
+        };
+      }
+
+      function exportBackup() {
+        const backup = {
+          app: storeKey,
+          exportedAt: new Date().toISOString(),
+          data: state,
+        };
+        const blob = new Blob([JSON.stringify(backup, null, 2)], {
+          type: "application/json",
+        });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `每日卡路里记录-${toDateKey(new Date())}.json`;
+        document.body.append(link);
+        link.click();
+        link.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      }
+
+      function dailyRows() {
+        if (!state.days[selectedDate]) state.days[selectedDate] = [];
+        return state.days[selectedDate];
+      }
+
+      function sumRows(rows) {
+        return rows.reduce(
+          (sum, item) => {
+            sum.carb += numberValue(item.carb);
+            sum.protein += numberValue(item.protein);
+            sum.fat += numberValue(item.fat);
+            sum.kcal += numberValue(item.kcal);
+            return sum;
+          },
+          { carb: 0, protein: 0, fat: 0, kcal: 0 },
+        );
+      }
+
+      function goalValues() {
+        const { weight, carbFactor, proteinFactor, fatFactor } = state.settings;
+        const carb = numberValue(weight) * numberValue(carbFactor);
+        const protein = numberValue(weight) * numberValue(proteinFactor);
+        const fat = numberValue(weight) * numberValue(fatFactor);
+        return { carb, protein, fat, kcal: carb * 4 + protein * 4 + fat * 9 };
+      }
+
+      function updateLabels() {
+        document.querySelectorAll("[data-label]").forEach((node) => {
+          const key = node.dataset.label;
+          node.textContent = state.labels[key] || defaults.labels[key] || "";
+        });
+      }
+
+      function renderSettings() {
+        els.weight.value = state.settings.weight;
+        els.carbFactor.value = state.settings.carbFactor;
+        els.proteinFactor.value = state.settings.proteinFactor;
+        els.fatFactor.value = state.settings.fatFactor;
+      }
+
+      function renderMetrics() {
+        const target = goalValues();
+        const eaten = sumRows(dailyRows());
+        const items = [
+          ["碳水", eaten.carb, target.carb, "g", "var(--carb)"],
+          ["蛋白质", eaten.protein, target.protein, "g", "var(--protein)"],
+          ["脂肪", eaten.fat, target.fat, "g", "var(--fat)"],
+          ["热量", eaten.kcal, target.kcal, "kcal", "var(--danger)"],
+        ];
+        els.metrics.innerHTML = items
+          .map(([name, current, goal, unit, color]) => {
+            const percent = goal ? Math.min((current / goal) * 100, 120) : 0;
+            return `
+              <article class="metric">
+                <span>${name} 目标 ${format(goal)} ${unit}</span>
+                <strong>${format(current)} ${unit}</strong>
+                <div class="bar" style="--value:${percent}%;--color:${color}"><i></i></div>
+              </article>
+            `;
+          })
+          .join("");
+      }
+
+      function renderFoodSelect() {
+        els.foodSelect.innerHTML = state.library
+          .map((item) => `<option value="${item.id}">${escapeHtml(item.name)}</option>`)
+          .join("");
+        els.mealSelect.innerHTML = meals
+          .map((meal) => `<option value="${meal.id}">${meal.name}</option>`)
+          .join("");
+      }
+
+      function renderDailyTable() {
+        const rows = dailyRows();
+        els.activeDateText.textContent = selectedDate;
+        if (!rows.length) {
+          els.dailyTable.innerHTML = `<div class="empty">当天还没有添加食物</div>`;
+          renderMealSummary();
+          renderMetrics();
+          return;
+        }
+        const totals = sumRows(rows);
+        els.dailyTable.innerHTML = `
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>食物</th>
+                  <th>餐次</th>
+                  <th>碳水 g</th>
+                  <th>蛋白质 g</th>
+                  <th>脂肪 g</th>
+                  <th>热量 kcal</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${rows
+                  .map(
+                    (row) => `
+                    <tr data-row="${row.id}">
+                      <td><input class="food-name" data-field="name" value="${escapeAttr(row.name)}" /></td>
+                      <td>
+                        <select class="meal-cell" data-field="meal">
+                          ${meals
+                            .map(
+                              (meal) =>
+                                `<option value="${meal.id}" ${meal.id === (row.meal || "morning") ? "selected" : ""}>${meal.name}</option>`,
+                            )
+                            .join("")}
+                        </select>
+                      </td>
+                      <td><input class="num" data-field="carb" type="number" step="0.1" value="${row.carb}" /></td>
+                      <td><input class="num" data-field="protein" type="number" step="0.1" value="${row.protein}" /></td>
+                      <td><input class="num" data-field="fat" type="number" step="0.1" value="${row.fat}" /></td>
+                      <td><input class="num" data-field="kcal" type="number" step="1" value="${row.kcal}" /></td>
+                      <td><button class="btn danger" data-delete="${row.id}" type="button">删除</button></td>
+                    </tr>
+                  `,
+                  )
+                  .join("")}
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td>当日已摄入</td>
+                  <td></td>
+                  <td>${format(totals.carb)} g</td>
+                  <td>${format(totals.protein)} g</td>
+                  <td>${format(totals.fat)} g</td>
+                  <td>${format(totals.kcal, 0)} kcal</td>
+                  <td></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        `;
+        renderMealSummary();
+        renderMetrics();
+      }
+
+      function renderMealSummary() {
+        const rows = dailyRows();
+        els.mealSummary.innerHTML = meals
+          .map((meal) => {
+            const mealRows = rows.filter((row) => (row.meal || "morning") === meal.id);
+            const total = sumRows(mealRows);
+            const list = mealRows.length
+              ? mealRows
+                  .map(
+                    (row) => `
+                    <div class="meal-item">
+                      <span>${escapeHtml(row.name)}</span>
+                      <small>${format(row.kcal, 0)} kcal</small>
+                      <button class="mini-delete" data-meal-delete="${row.id}" type="button">删除</button>
+                    </div>
+                  `,
+                  )
+                  .join("")
+              : `<div class="empty" style="padding: 10px">暂无食物</div>`;
+            return `
+              <section class="meal-box">
+                <h3>${meal.name}</h3>
+                <div class="meal-list">${list}</div>
+                <span class="meal-total">${format(total.carb)}g 碳水 / ${format(total.protein)}g 蛋白质 / ${format(total.fat)}g 脂肪 / ${format(total.kcal, 0)} kcal</span>
+              </section>
+            `;
+          })
+          .join("");
+      }
+
+      function renderLibrary() {
+        renderFoodSelect();
+        els.libraryList.innerHTML = state.library
+          .map(
+            (item) => `
+            <div class="library-item">
+              <b>${escapeHtml(item.name)}</b>
+              <span>碳水 ${format(item.carb)}g</span>
+              <span>蛋白质 ${format(item.protein)}g</span>
+              <span>脂肪 ${format(item.fat)}g</span>
+              <span>${format(item.kcal, 0)}kcal</span>
+              <button class="btn danger" data-delete-food="${item.id}" type="button">删除</button>
+            </div>
+          `,
+          )
+          .join("");
+      }
+
+      function renderCalendar() {
+        const year = visibleMonth.getFullYear();
+        const month = visibleMonth.getMonth();
+        els.monthTitle.textContent = `${year}年${month + 1}月`;
+        const firstDay = new Date(year, month, 1);
+        const start = new Date(year, month, 1 - firstDay.getDay());
+        const weekDays = ["日", "一", "二", "三", "四", "五", "六"]
+          .map((day) => `<div class="weekday">${day}</div>`)
+          .join("");
+        const cells = Array.from({ length: 42 }, (_, index) => {
+          const date = new Date(start);
+          date.setDate(start.getDate() + index);
+          const key = toDateKey(date);
+          const rows = state.days[key] || [];
+          const total = sumRows(rows).kcal;
+          const inMonth = date.getMonth() === month;
+          return `
+            <button class="day ${inMonth ? "" : "muted"} ${key === selectedDate ? "active" : ""}" data-date="${key}" type="button">
+              <span class="day-number">${date.getDate()}</span>
+              <span class="day-kcal">${total ? `${format(total, 0)} kcal` : ""}</span>
+              <span class="day-items">${rows.length ? `${rows.length} 项` : ""}</span>
+            </button>
+          `;
+        }).join("");
+        els.calendar.innerHTML = weekDays + cells;
+      }
+
+      function renderAll() {
+        updateLabels();
+        renderSettings();
+        els.selectedDate.value = selectedDate;
+        renderLibrary();
+        renderDailyTable();
+        renderCalendar();
+      }
+
+      function changeSelectedDate(dateKey) {
+        selectedDate = dateKey;
+        const date = dateKeyToDate(selectedDate);
+        visibleMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+        renderAll();
+      }
+
+      function shiftSelectedDay(amount) {
+        const date = dateKeyToDate(selectedDate);
+        date.setDate(date.getDate() + amount);
+        changeSelectedDate(toDateKey(date));
+      }
+
+      function updateDailyFooter() {
+        const totals = sumRows(dailyRows());
+        const footer = els.dailyTable.querySelector("tfoot tr");
+        if (!footer) return;
+        footer.children[2].textContent = `${format(totals.carb)} g`;
+        footer.children[3].textContent = `${format(totals.protein)} g`;
+        footer.children[4].textContent = `${format(totals.fat)} g`;
+        footer.children[5].textContent = `${format(totals.kcal, 0)} kcal`;
+      }
+
+      function deleteDailyRow(id) {
+        state.days[selectedDate] = dailyRows().filter((item) => item.id !== id);
+        saveState();
+        renderDailyTable();
+        renderCalendar();
+      }
+
+      function escapeHtml(value) {
+        return String(value)
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#039;");
+      }
+
+      function escapeAttr(value) {
+        return escapeHtml(value).replaceAll("`", "&#096;");
+      }
+
+      document.querySelectorAll("[data-label]").forEach((node) => {
+        node.addEventListener("blur", () => {
+          state.labels[node.dataset.label] = node.textContent.trim() || defaults.labels[node.dataset.label];
+          saveState();
+          updateLabels();
+        });
+      });
+
+      ["weight", "carbFactor", "proteinFactor", "fatFactor"].forEach((key) => {
+        els[key].addEventListener("input", () => {
+          state.settings[key] = numberValue(els[key].value);
+          saveState();
+          renderMetrics();
+        });
+      });
+
+      els.selectedDate.addEventListener("input", () => {
+        changeSelectedDate(els.selectedDate.value || toDateKey(today));
+      });
+
+      els.addDailyFood.addEventListener("click", () => {
+        const item = state.library.find((food) => food.id === els.foodSelect.value);
+        if (!item) return;
+        const portion = Math.max(numberValue(els.portion.value), 0);
+        dailyRows().push({
+          id: uid(),
+          meal: els.mealSelect.value || "morning",
+          name: item.name,
+          carb: format(item.carb * portion),
+          protein: format(item.protein * portion),
+          fat: format(item.fat * portion),
+          kcal: format(item.kcal * portion, 0),
+        });
+        saveState();
+        renderDailyTable();
+        renderCalendar();
+      });
+
+      els.dailyTable.addEventListener("input", (event) => {
+        const input = event.target.closest("input[data-field]");
+        if (!input) return;
+        const row = dailyRows().find((item) => item.id === input.closest("tr").dataset.row);
+        if (!row) return;
+        row[input.dataset.field] = input.dataset.field === "name" ? input.value : numberValue(input.value);
+        saveState();
+        renderMetrics();
+        renderMealSummary();
+        renderCalendar();
+        updateDailyFooter();
+      });
+
+      els.dailyTable.addEventListener("change", (event) => {
+        const select = event.target.closest("select[data-field='meal']");
+        if (!select) return;
+        const row = dailyRows().find((item) => item.id === select.closest("tr").dataset.row);
+        if (!row) return;
+        row.meal = select.value;
+        saveState();
+        renderMealSummary();
+      });
+
+      els.dailyTable.addEventListener("click", (event) => {
+        const button = event.target.closest("[data-delete]");
+        if (!button) return;
+        deleteDailyRow(button.dataset.delete);
+      });
+
+      els.mealSummary.addEventListener("click", (event) => {
+        const button = event.target.closest("[data-meal-delete]");
+        if (!button) return;
+        deleteDailyRow(button.dataset.mealDelete);
+      });
+
+      els.addLibraryFood.addEventListener("click", () => {
+        const name = els.newName.value.trim();
+        if (!name) return;
+        state.library.push({
+          id: uid(),
+          name,
+          carb: numberValue(els.newCarb.value),
+          protein: numberValue(els.newProtein.value),
+          fat: numberValue(els.newFat.value),
+          kcal: numberValue(els.newKcal.value),
+        });
+        saveState();
+        renderLibrary();
+      });
+
+      els.libraryList.addEventListener("click", (event) => {
+        const button = event.target.closest("[data-delete-food]");
+        if (!button) return;
+        state.library = state.library.filter((item) => item.id !== button.dataset.deleteFood);
+        saveState();
+        renderLibrary();
+      });
+
+      els.calendar.addEventListener("click", (event) => {
+        const button = event.target.closest("[data-date]");
+        if (!button) return;
+        changeSelectedDate(button.dataset.date);
+      });
+
+      els.prevMonth.addEventListener("click", () => {
+        visibleMonth = new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() - 1, 1);
+        renderCalendar();
+      });
+
+      els.nextMonth.addEventListener("click", () => {
+        visibleMonth = new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + 1, 1);
+        renderCalendar();
+      });
+
+      els.todayBtn.addEventListener("click", () => {
+        changeSelectedDate(toDateKey(today));
+      });
+
+      els.prevDay.addEventListener("click", () => {
+        shiftSelectedDay(-1);
+      });
+
+      els.nextDay.addEventListener("click", () => {
+        shiftSelectedDay(1);
+      });
+
+      els.exportData.addEventListener("click", exportBackup);
+
+      els.importData.addEventListener("click", () => {
+        els.importFile.click();
+      });
+
+      els.importFile.addEventListener("change", async () => {
+        const file = els.importFile.files?.[0];
+        if (!file) return;
+        try {
+          const imported = normalizeImportedState(JSON.parse(await file.text()));
+          if (!imported) {
+            alert("导入失败：文件格式不正确。");
+            return;
+          }
+          if (!confirm("导入会覆盖当前记录，确定继续吗？")) return;
+          state = imported;
+          saveState();
+          renderAll();
+          alert("导入成功。");
+        } catch {
+          alert("导入失败：无法读取这个 JSON 文件。");
+        } finally {
+          els.importFile.value = "";
+        }
+      });
+
+      els.resetAll.addEventListener("click", () => {
+        state = structuredClone(defaults);
+        saveState();
+        renderAll();
+      });
+
+      renderAll();
+    </script>
+  </body>
+</html>
