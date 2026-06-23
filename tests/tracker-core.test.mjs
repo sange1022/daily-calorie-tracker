@@ -5,6 +5,8 @@ import {
   inferFoodCategory,
   normalizeDailyRow,
   normalizeTrackerState,
+  sortFoodsByName,
+  sumNutrition,
   updateRowPortion,
 } from "../tracker-core.js";
 
@@ -69,4 +71,30 @@ test("normalizes old tracker data while preserving counts and totals", () => {
   assert.equal(state.library[1].category, "protein");
   assert.equal(state.days["2026-06-22"].length, 2);
   assert.equal(state.days["2026-06-22"].reduce((sum, row) => sum + row.kcal, 0), 510);
+});
+
+test("sorts Chinese food names by pinyin from A to Z", () => {
+  const foods = [
+    { name: "鸡蛋" },
+    { name: "香蕉" },
+    { name: "蓝莓" },
+    { name: "包子" },
+  ];
+
+  assert.deepEqual(sortFoodsByName(foods).map((food) => food.name), [
+    "包子",
+    "鸡蛋",
+    "蓝莓",
+    "香蕉",
+  ]);
+});
+
+test("sums all nutrition values for a meal header", () => {
+  assert.deepEqual(
+    sumNutrition([
+      { carb: 10, protein: 5, fat: 2, kcal: 80 },
+      { carb: 3.5, protein: 7, fat: 4, kcal: 100 },
+    ]),
+    { carb: 13.5, protein: 12, fat: 6, kcal: 180 },
+  );
 });
