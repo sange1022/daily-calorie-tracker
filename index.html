@@ -85,7 +85,17 @@
       .metric[data-kind="fat"] { border-color: var(--orange); }
       .metric[data-kind="kcal"] { border-color: var(--red); }
       .metric span { display: block; color: var(--muted); font-size: 11px; font-weight: 800; }
-      .metric strong { display: block; margin-top: 4px; font-size: 22px; line-height: 1; }
+      .metric strong {
+        display: block;
+        margin-top: 5px;
+        font-size: 28px;
+        font-weight: 900;
+        line-height: 1;
+      }
+      .metric[data-kind="carb"] strong { color: var(--blue); }
+      .metric[data-kind="protein"] strong { color: var(--green); }
+      .metric[data-kind="fat"] strong { color: var(--orange); }
+      .metric[data-kind="kcal"] strong { color: var(--red); }
       .metric small { display: block; margin-top: 5px; color: var(--muted); font-size: 10px; }
       .quick-add {
         border: 1px solid rgba(36, 117, 217, 0.28);
@@ -265,6 +275,7 @@
         .date-nav { justify-content: space-between; }
         .date-nav input { flex: 1; width: auto; }
         .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .metric strong { font-size: 26px; }
         .add-controls { grid-template-columns: 1fr 1fr; }
         .selected-food, .add-controls .btn { grid-column: 1 / -1; }
         .meal-row { grid-template-columns: minmax(0, 1fr) 34px; }
