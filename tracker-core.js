@@ -1,6 +1,10 @@
 const numberValue = (value) => Number.parseFloat(value) || 0;
 const uid = () => `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 const validMeals = new Set(["morning", "noon", "evening"]);
+const pinyinCollator = new Intl.Collator("zh-CN-u-co-pinyin", {
+  numeric: true,
+  sensitivity: "base",
+});
 
 export function inferFoodCategory(food) {
   return numberValue(food.protein) > numberValue(food.carb) ? "protein" : "carb";
@@ -52,6 +56,25 @@ export function updateRowPortion(row, portion) {
   row.fat = numberValue((row.baseFat * nextPortion).toFixed(2));
   row.kcal = numberValue((row.baseKcal * nextPortion).toFixed(1));
   return row;
+}
+
+export function sortFoodsByName(foods) {
+  return [...foods].sort((left, right) =>
+    pinyinCollator.compare(String(left.name || ""), String(right.name || "")),
+  );
+}
+
+export function sumNutrition(rows) {
+  return rows.reduce(
+    (sum, row) => {
+      sum.carb += numberValue(row.carb);
+      sum.protein += numberValue(row.protein);
+      sum.fat += numberValue(row.fat);
+      sum.kcal += numberValue(row.kcal);
+      return sum;
+    },
+    { carb: 0, protein: 0, fat: 0, kcal: 0 },
+  );
 }
 
 export function normalizeTrackerState(imported, defaults = {}) {
