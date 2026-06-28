@@ -6,6 +6,14 @@ const pinyinCollator = new Intl.Collator("zh-CN-u-co-pinyin", {
   sensitivity: "base",
 });
 
+export function collectOpenMealIds(details = []) {
+  return new Set(
+    [...details]
+      .filter((detail) => detail.open && detail.dataset?.meal)
+      .map((detail) => detail.dataset.meal),
+  );
+}
+
 function normalizeStamp(value = {}) {
   return {
     updatedAt: numberValue(value.updatedAt),

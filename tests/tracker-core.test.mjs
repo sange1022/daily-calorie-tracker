@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  collectOpenMealIds,
   inferFoodCategory,
   mergeTrackerStates,
   normalizeDailyRow,
@@ -10,6 +11,17 @@ import {
   sumNutrition,
   updateRowPortion,
 } from "../tracker-core.js";
+
+test("collects only meal sections that are currently open", () => {
+  const openMeals = collectOpenMealIds([
+    { open: true, dataset: { meal: "morning" } },
+    { open: false, dataset: { meal: "noon" } },
+    { open: true, dataset: { meal: "evening" } },
+    { open: true, dataset: {} },
+  ]);
+
+  assert.deepEqual([...openMeals], ["morning", "evening"]);
+});
 
 test("infers the dominant macro category", () => {
   assert.equal(inferFoodCategory({ carb: 23, protein: 1.1 }), "carb");

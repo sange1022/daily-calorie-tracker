@@ -445,6 +445,7 @@
       import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
       import { doc, getFirestore, onSnapshot, runTransaction, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
       import {
+        collectOpenMealIds,
         inferFoodCategory,
         mergeTrackerStates,
         normalizeFood,
@@ -624,6 +625,9 @@
         els.selectedFood.innerHTML = selected ? `已选择：<b>${escapeHtml(selected.name)}</b>` : "先点击上方食物";
       }
       function renderMeals() {
+        const openMealIds = collectOpenMealIds(
+          els.mealSummary.querySelectorAll("details.meal-section"),
+        );
         const rows = dailyRows();
         els.mealSummary.innerHTML = meals.map((meal) => {
           const mealRows = rows.filter((row) => row.meal === meal.id);
@@ -639,7 +643,7 @@
             </div>
           `).join("") : `<div class="meal-empty">尚未记录</div>`;
           return `
-            <details class="meal-section">
+            <details class="meal-section" data-meal="${meal.id}" ${openMealIds.has(meal.id) ? "open" : ""}>
               <summary class="meal-head">
                 <span class="meal-name">${meal.name}</span>
                 <span class="meal-totals">${format(total.carb)}g 碳水 · ${format(total.protein)}g 蛋白质 · ${format(total.fat)}g 脂肪 · ${format(total.kcal, 0)} kcal</span>
