@@ -443,9 +443,10 @@
     <script type="module">
       import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
       import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
-      import { doc, getDoc, getFirestore, onSnapshot, serverTimestamp, setDoc } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
+      import { doc, getFirestore, onSnapshot, runTransaction, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
       import {
         inferFoodCategory,
+        mergeTrackerStates,
         normalizeFood,
         normalizeTrackerState,
         sortFoodsByName,
@@ -463,6 +464,7 @@
       };
       const storeKey = "calorie-tracker-v1";
       const syncCodeKey = `${storeKey}-sync-code`;
+      const deviceIdKey = `${storeKey}-device-id`;
       const themeKey = `${storeKey}-theme`;
       const firebaseApp = initializeApp(firebaseConfig);
       const auth = getAuth(firebaseApp);
@@ -475,6 +477,8 @@
         return new Date(year, month - 1, day);
       };
       const uid = () => `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      const deviceId = localStorage.getItem(deviceIdKey) || crypto.randomUUID();
+      localStorage.setItem(deviceIdKey, deviceId);
       const numberValue = (value) => Number.parseFloat(value) || 0;
       const format = (value, digits = 1) => Number(value || 0).toFixed(digits).replace(/\.0$/, "");
       const meals = [
@@ -503,6 +507,7 @@
       let stopCloudListener = null;
       let cloudSaveTimer = null;
       let applyingCloudState = false;
+      let lastMutationAt = latestUpdateTime(state);
 
       const $ = (selector) => document.querySelector(selector);
       const els = {
@@ -527,14 +532,41 @@
       function loadState() {
         try {
           const saved = JSON.parse(localStorage.getItem(storeKey));
-          return saved ? normalizeImportedState(saved) || structuredClone(defaults) : structuredClone(defaults);
+          return saved
+            ? normalizeImportedState(saved) || normalizeTrackerState(defaults, defaults)
+            : normalizeTrackerState(defaults, defaults);
         } catch {
-          return structuredClone(defaults);
+          return normalizeTrackerState(defaults, defaults);
         }
       }
       function saveState() {
+        lastMutationAt = Math.max(lastMutationAt, latestUpdateTime(state));
         localStorage.setItem(storeKey, JSON.stringify(state));
         if (!applyingCloudState) scheduleCloudSave();
+      }
+      function latestUpdateTime(value) {
+        if (!value || typeof value !== "object") return 0;
+        const ownTime = numberValue(value.updatedAt);
+        return Object.values(value).reduce(
+          (latest, item) => Math.max(latest, latestUpdateTime(item)),
+          ownTime,
+        );
+      }
+      function syncStamp() {
+        lastMutationAt = Math.max(Date.now(), lastMutationAt + 1);
+        return { updatedAt: lastMutationAt, updatedBy: deviceId };
+      }
+      function statesMatch(left, right) {
+        return JSON.stringify(normalizeTrackerState(left, defaults))
+          === JSON.stringify(normalizeTrackerState(right, defaults));
+      }
+      function applyMergedState(next) {
+        applyingCloudState = true;
+        state = normalizeTrackerState(next, defaults);
+        lastMutationAt = Math.max(lastMutationAt, latestUpdateTime(state));
+        localStorage.setItem(storeKey, JSON.stringify(state));
+        renderAll();
+        applyingCloudState = false;
       }
       function setTheme(theme) {
         const normalized = theme === "dark" ? "dark" : "light";
@@ -696,6 +728,7 @@
           id: uid(), foodId: food.id, meal: els.mealSelect.value, name: food.name, portion,
           baseCarb: food.carb, baseProtein: food.protein, baseFat: food.fat, baseKcal: food.kcal,
           carb: 0, protein: 0, fat: 0, kcal: 0,
+          ...syncStamp(),
         };
         updateRowPortion(row, portion);
         dailyRows().push(row);
@@ -711,6 +744,7 @@
         const row = dailyRows().find((item) => item.id === input.closest("[data-row]").dataset.row);
         if (!row) return;
         updateRowPortion(row, input.value);
+        Object.assign(row, syncStamp());
         saveState();
         renderMetrics();
         renderMeals();
@@ -719,6 +753,7 @@
       els.mealSummary.addEventListener("click", (event) => {
         const button = event.target.closest("[data-delete]");
         if (!button) return;
+        state.syncMeta.rowTombstones[button.dataset.delete] = syncStamp();
         state.days[selectedDate] = dailyRows().filter((row) => row.id !== button.dataset.delete);
         saveState();
         renderMetrics();
@@ -728,6 +763,7 @@
       ["weight", "carbFactor", "proteinFactor", "fatFactor"].forEach((key) => {
         els[key].addEventListener("input", () => {
           state.settings[key] = numberValue(els[key].value);
+          state.syncMeta.settings = syncStamp();
           saveState();
           renderMetrics();
         });
@@ -738,6 +774,7 @@
         const draft = {
           id: uid(), name, carb: numberValue(els.newCarb.value), protein: numberValue(els.newProtein.value),
           fat: numberValue(els.newFat.value), kcal: numberValue(els.newKcal.value),
+          ...syncStamp(),
         };
         draft.category = els.newCategory.value === "auto" ? inferFoodCategory(draft) : els.newCategory.value;
         state.library.push(normalizeFood(draft));
@@ -751,12 +788,14 @@
         const food = state.library.find((item) => item.id === select.closest("[data-library-id]").dataset.libraryId);
         if (!food) return;
         food.category = select.value;
+        Object.assign(food, syncStamp());
         saveState();
         renderFoodButtons();
       });
       els.libraryList.addEventListener("click", (event) => {
         const button = event.target.closest("[data-delete-food]");
         if (!button) return;
+        state.syncMeta.foodTombstones[button.dataset.deleteFood] = syncStamp();
         state.library = state.library.filter((food) => food.id !== button.dataset.deleteFood);
         if (selectedFoodId === button.dataset.deleteFood) selectedFoodId = "";
         saveState();
@@ -808,7 +847,20 @@
       });
       els.resetAll.addEventListener("click", () => {
         if (!confirm("确定重置为示例数据吗？")) return;
-        state = structuredClone(defaults);
+        const deleted = syncStamp();
+        const foodTombstones = { ...state.syncMeta.foodTombstones };
+        const rowTombstones = { ...state.syncMeta.rowTombstones };
+        state.library.forEach((food) => { foodTombstones[food.id] = deleted; });
+        Object.values(state.days).flat().forEach((row) => { rowTombstones[row.id] = deleted; });
+        const restored = syncStamp();
+        state = normalizeTrackerState(defaults, defaults);
+        state.library.forEach((food) => Object.assign(food, restored));
+        state.syncMeta = {
+          foodTombstones,
+          rowTombstones,
+          settings: restored,
+          labels: restored,
+        };
         saveState();
         renderAll();
       });
@@ -830,10 +882,27 @@
         setSyncStatus("同步中");
         cloudSaveTimer = setTimeout(pushStateToCloud, 700);
       }
+      async function mergeIntoCloud(syncRef, localState) {
+        return runTransaction(db, async (transaction) => {
+          const snapshot = await transaction.get(syncRef);
+          const remote = snapshot.exists() ? normalizeImportedState(snapshot.data().data) : null;
+          const merged = remote
+            ? mergeTrackerStates(localState, remote, defaults)
+            : normalizeTrackerState(localState, defaults);
+          transaction.set(syncRef, { data: structuredClone(merged), updatedAt: serverTimestamp() });
+          return merged;
+        });
+      }
       async function pushStateToCloud() {
+        if (!authReady || !activeSyncCode) return;
         try {
-          await setDoc(doc(db, "syncSpaces", activeSyncCode), { data: structuredClone(state), updatedAt: serverTimestamp() });
-          setSyncStatus("已同步", "synced");
+          const syncRef = doc(db, "syncSpaces", activeSyncCode);
+          const cloudMerged = await mergeIntoCloud(syncRef, structuredClone(state));
+          const converged = mergeTrackerStates(state, cloudMerged, defaults);
+          const hasPendingChanges = !statesMatch(converged, cloudMerged);
+          applyMergedState(converged);
+          if (hasPendingChanges) scheduleCloudSave();
+          else setSyncStatus("已同步", "synced");
         } catch (error) {
           console.error("Cloud sync failed", error);
           setSyncStatus(navigator.onLine ? "同步失败" : "离线", "error");
@@ -850,34 +919,25 @@
         setSyncStatus("连接中");
         const syncRef = doc(db, "syncSpaces", normalized);
         try {
-          const snapshot = await getDoc(syncRef);
-          if (snapshot.exists()) {
-            const remote = normalizeImportedState(snapshot.data().data);
-            if (remote) {
-              applyingCloudState = true;
-              state = remote;
-              localStorage.setItem(storeKey, JSON.stringify(state));
-              renderAll();
-              applyingCloudState = false;
-            }
-          } else {
-            await setDoc(syncRef, { data: structuredClone(state), updatedAt: serverTimestamp() });
-          }
+          const cloudMerged = await mergeIntoCloud(syncRef, structuredClone(state));
+          const converged = mergeTrackerStates(state, cloudMerged, defaults);
+          const hasPendingChanges = !statesMatch(converged, cloudMerged);
+          applyMergedState(converged);
           stopCloudListener = onSnapshot(syncRef, (cloudSnapshot) => {
             if (!cloudSnapshot.exists()) return;
             const remote = normalizeImportedState(cloudSnapshot.data().data);
             if (!remote) return;
-            applyingCloudState = true;
-            state = remote;
-            localStorage.setItem(storeKey, JSON.stringify(state));
-            renderAll();
-            applyingCloudState = false;
-            setSyncStatus("已同步", "synced");
+            const next = mergeTrackerStates(state, remote, defaults);
+            const cloudNeedsUpdate = !statesMatch(next, remote);
+            applyMergedState(next);
+            if (cloudNeedsUpdate) scheduleCloudSave();
+            else setSyncStatus("已同步", "synced");
           }, (error) => {
             console.error("Cloud listener failed", error);
             setSyncStatus("同步失败", "error");
           });
-          setSyncStatus("已同步", "synced");
+          if (hasPendingChanges) scheduleCloudSave();
+          else setSyncStatus("已同步", "synced");
         } catch (error) {
           console.error("Cloud connection failed", error);
           activeSyncCode = "";
