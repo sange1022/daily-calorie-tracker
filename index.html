@@ -292,7 +292,7 @@
         border-bottom: 1px solid var(--row-line);
         padding: 7px 0;
       }
-      .library-item b { overflow-wrap: anywhere; }
+      .library-name { width: 100%; min-width: 0; font-weight: 900; }
       .library-macros { color: var(--muted); font-size: 11px; font-weight: 800; }
       .empty { padding: 18px; color: var(--muted); text-align: center; font-weight: 800; }
       @media (max-width: 680px) {
@@ -452,6 +452,7 @@
         normalizeTrackerState,
         sortFoodsByName,
         sumNutrition,
+        updateFoodName,
         updateRowPortion,
       } from "./tracker-core.js";
 
@@ -662,7 +663,7 @@
       function renderLibrary() {
         els.libraryList.innerHTML = state.library.map((food) => `
           <div class="library-item" data-library-id="${food.id}">
-            <b>${escapeHtml(food.name)}</b>
+            <input class="library-name" data-food-name value="${escapeHtml(food.name)}" aria-label="${escapeHtml(food.name)}名称" />
             <select data-food-category aria-label="${escapeHtml(food.name)}分类">
               <option value="carb" ${food.category === "carb" ? "selected" : ""}>碳水</option>
               <option value="protein" ${food.category === "protein" ? "selected" : ""}>蛋白质</option>
@@ -786,15 +787,39 @@
         saveState();
         renderLibrary();
       });
+      els.libraryList.addEventListener("input", (event) => {
+        const nameInput = event.target.closest("[data-food-name]");
+        const item = event.target.closest("[data-library-id]");
+        if (!nameInput || !item) return;
+        const food = state.library.find((entry) => entry.id === item.dataset.libraryId);
+        if (!food || !updateFoodName(food, nameInput.value)) return;
+        Object.assign(food, syncStamp());
+        saveState();
+        renderFoodButtons();
+      });
       els.libraryList.addEventListener("change", (event) => {
+        const item = event.target.closest("[data-library-id]");
+        if (!item) return;
+        const food = state.library.find((entry) => entry.id === item.dataset.libraryId);
+        if (!food) return;
+        const nameInput = event.target.closest("[data-food-name]");
+        if (nameInput) {
+          nameInput.value = food.name;
+          renderLibrary();
+          return;
+        }
         const select = event.target.closest("[data-food-category]");
         if (!select) return;
-        const food = state.library.find((item) => item.id === select.closest("[data-library-id]").dataset.libraryId);
-        if (!food) return;
         food.category = select.value;
         Object.assign(food, syncStamp());
         saveState();
         renderFoodButtons();
+      });
+      els.libraryList.addEventListener("keydown", (event) => {
+        const nameInput = event.target.closest("[data-food-name]");
+        if (!nameInput || event.key !== "Enter") return;
+        event.preventDefault();
+        nameInput.blur();
       });
       els.libraryList.addEventListener("click", (event) => {
         const button = event.target.closest("[data-delete-food]");

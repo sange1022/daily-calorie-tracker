@@ -9,8 +9,18 @@ import {
   normalizeTrackerState,
   sortFoodsByName,
   sumNutrition,
+  updateFoodName,
   updateRowPortion,
 } from "../tracker-core.js";
+
+test("updates a food name while rejecting empty names", () => {
+  const food = { id: "egg", name: "鸡蛋" };
+
+  assert.equal(updateFoodName(food, "  水煮蛋  "), true);
+  assert.equal(food.name, "水煮蛋");
+  assert.equal(updateFoodName(food, "   "), false);
+  assert.equal(food.name, "水煮蛋");
+});
 
 test("collects only meal sections that are currently open", () => {
   const openMeals = collectOpenMealIds([

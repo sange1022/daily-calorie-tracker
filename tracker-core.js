@@ -33,6 +33,13 @@ export function inferFoodCategory(food) {
   return numberValue(food.protein) > numberValue(food.carb) ? "protein" : "carb";
 }
 
+export function updateFoodName(food, name) {
+  const nextName = String(name || "").trim();
+  if (!nextName || nextName === food.name) return false;
+  food.name = nextName;
+  return true;
+}
+
 export function normalizeFood(item = {}) {
   const food = {
     id: item.id || uid(),
