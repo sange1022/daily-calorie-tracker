@@ -258,6 +258,7 @@
       .sync-status { position: absolute; right: 9px; bottom: 11px; color: var(--muted); font-size: 10px; font-weight: 900; }
       .sync-status[data-state="synced"] { color: var(--green); }
       .sync-status[data-state="error"] { color: var(--red); }
+      body.is-embedded .sync-row { display: none; }
       .data-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
       .calendar-head { display: grid; grid-template-columns: 34px 1fr 34px; gap: 7px; align-items: center; }
       .month-title { text-align: center; font-weight: 900; }
@@ -468,6 +469,8 @@
       const syncCodeKey = `${storeKey}-sync-code`;
       const deviceIdKey = `${storeKey}-device-id`;
       const themeKey = `${storeKey}-theme`;
+      const isEmbedded = window.self !== window.top;
+      if (isEmbedded) document.body.classList.add("is-embedded");
       const firebaseApp = initializeApp(firebaseConfig);
       const auth = getAuth(firebaseApp);
       const db = getFirestore(firebaseApp);
@@ -985,7 +988,7 @@
           return;
         }
         authReady = true;
-        const savedCode = cleanSyncCode(localStorage.getItem(syncCodeKey));
+        const savedCode = isEmbedded ? "" : cleanSyncCode(localStorage.getItem(syncCodeKey));
         if (savedCode) connectCloudSync(savedCode);
       });
 
