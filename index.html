@@ -126,11 +126,18 @@
       .btn.danger, .delete-btn { color: var(--red); }
       .app-grid {
         display: grid;
-        grid-template-columns: minmax(0, 1.25fr) minmax(360px, 0.75fr);
+        grid-template-columns: minmax(480px, 1.05fr) minmax(0, 0.95fr);
+        grid-template-areas:
+          "add summary"
+          "meals meals"
+          "tools tools";
         gap: 14px;
         align-items: start;
       }
-      .left-stack, .side-rail { display: grid; gap: 14px; }
+      .summary-panel { grid-area: summary; }
+      .quick-add { grid-area: add; }
+      .meals-panel { grid-area: meals; }
+      .tools { grid-area: tools; }
       .panel {
         border: 1px solid var(--line);
         border-radius: 18px;
@@ -138,18 +145,18 @@
         box-shadow: var(--shadow);
         backdrop-filter: blur(18px);
       }
-      .panel-body { padding: 18px; }
+      .panel-body { padding: 14px; }
       .metrics {
         display: grid;
-        grid-template-columns: 250px minmax(0, 1fr);
-        gap: 22px;
+        grid-template-columns: 184px minmax(0, 1fr);
+        gap: 16px;
         align-items: center;
       }
       .calorie-ring {
         position: relative;
         display: grid;
         place-items: center;
-        width: min(250px, 100%);
+        width: min(184px, 100%);
         aspect-ratio: 1;
         border-radius: 50%;
         background: conic-gradient(var(--green) calc(var(--pct) * 1%), rgba(148, 163, 184, 0.22) 0);
@@ -158,26 +165,26 @@
       .calorie-ring::before {
         content: "";
         position: absolute;
-        inset: 20px;
+        inset: 15px;
         border-radius: 50%;
         background: var(--surface-strong);
         box-shadow: inset 0 0 0 1px var(--row-line);
       }
       .ring-center { position: relative; text-align: center; }
-      .ring-center strong { display: block; font-size: 44px; line-height: 1; letter-spacing: 0; }
-      .ring-center span { display: block; margin-top: 7px; color: var(--muted); font-size: 13px; font-weight: 800; }
-      .summary-side { display: grid; gap: 14px; }
+      .ring-center strong { display: block; font-size: 38px; line-height: 1; letter-spacing: 0; }
+      .ring-center span { display: block; margin-top: 6px; color: var(--muted); font-size: 12px; font-weight: 800; }
+      .summary-side { display: grid; gap: 10px; }
       .summary-title { display: flex; align-items: start; justify-content: space-between; gap: 12px; }
       .summary-title h2 { margin: 0; font-size: 19px; letter-spacing: 0; }
       .summary-title p { margin: 5px 0 0; color: var(--muted); font-size: 12px; font-weight: 700; }
-      .macro-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+      .macro-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
       .metric {
         min-width: 0;
         display: grid;
-        grid-template-columns: 52px minmax(0, 1fr);
+        grid-template-columns: 42px minmax(0, 1fr);
         align-items: center;
-        gap: 10px;
-        padding: 10px;
+        gap: 8px;
+        padding: 8px;
         border: 1px solid var(--line);
         border-radius: 14px;
         background: var(--surface-strong);
@@ -185,7 +192,7 @@
       .mini-ring {
         display: grid;
         place-items: center;
-        width: 52px;
+        width: 42px;
         aspect-ratio: 1;
         border-radius: 50%;
         background: conic-gradient(var(--tone) calc(var(--pct) * 1%), rgba(148, 163, 184, 0.22) 0);
@@ -197,14 +204,14 @@
         content: attr(data-percent);
         display: grid;
         place-items: center;
-        width: 38px;
+        width: 31px;
         aspect-ratio: 1;
         border-radius: 50%;
         background: var(--surface-strong);
       }
       .metric span { display: block; color: var(--muted); font-size: 11px; font-weight: 800; }
-      .metric strong { display: block; margin-top: 4px; font-size: 21px; line-height: 1; letter-spacing: 0; }
-      .metric small { display: block; margin-top: 5px; color: var(--muted); font-size: 10px; font-weight: 700; }
+      .metric strong { display: block; margin-top: 3px; font-size: 18px; line-height: 1; letter-spacing: 0; }
+      .metric small { display: block; margin-top: 4px; color: var(--muted); font-size: 10px; font-weight: 700; }
       .metric[data-kind="carb"] { --tone: var(--orange); }
       .metric[data-kind="protein"] { --tone: var(--green); }
       .metric[data-kind="fat"] { --tone: var(--blue); }
@@ -217,13 +224,13 @@
         border-radius: 14px;
         background: var(--line);
       }
-      .remaining-item { padding: 10px 12px; background: var(--surface-strong); }
+      .remaining-item { padding: 8px 10px; background: var(--surface-strong); }
       .remaining-item span { display: block; color: var(--muted); font-size: 11px; font-weight: 800; }
       .remaining-item strong { display: block; margin-top: 4px; font-size: 17px; }
       .quick-add {
         border: 1px solid var(--quick-line);
         border-radius: 18px;
-        padding: 16px;
+        padding: 14px;
         background: var(--quick);
         box-shadow: var(--shadow);
       }
@@ -248,7 +255,7 @@
       .category-tab {
         border: 0;
         border-radius: 9px;
-        padding: 9px;
+        padding: 8px;
         color: var(--muted);
         background: transparent;
         font-weight: 900;
@@ -279,17 +286,17 @@
         display: flex;
         flex-wrap: wrap;
         gap: 7px;
-        max-height: 214px;
+        max-height: 176px;
         overflow-y: auto;
-        padding: 12px 1px;
+        padding: 10px 1px;
       }
       .food-chip {
         border: 1px solid var(--line);
         border-radius: 999px;
-        padding: 8px 12px;
+        padding: 9px 13px;
         color: var(--ink);
         background: var(--surface-strong);
-        font-size: 13px;
+        font-size: 14px;
         font-weight: 800;
         text-align: left;
       }
@@ -299,14 +306,14 @@
         background: rgba(79, 218, 121, 0.16);
       }
       .food-chip strong, .food-chip small { display: block; }
-      .food-chip small { margin-top: 3px; color: var(--muted); font-size: 10px; font-weight: 800; }
+      .food-chip small { margin-top: 3px; color: var(--muted); font-size: 11px; font-weight: 800; }
       .add-controls {
         display: grid;
         grid-template-columns: minmax(0, 1fr) 122px 96px 92px;
         gap: 8px;
         align-items: end;
         border-top: 1px solid var(--quick-line);
-        padding-top: 11px;
+        padding-top: 10px;
       }
       .selected-food {
         display: grid;
@@ -319,16 +326,16 @@
       .selected-food b { color: var(--ink); }
       label { display: grid; gap: 5px; }
       .field-label { color: var(--muted); font-size: 11px; font-weight: 900; }
-      .meals { display: grid; gap: 8px; margin-top: 18px; }
+      .meals { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 10px; }
       .meals-panel .section-title h2 { color: var(--ink); }
       .meal-section { border: 1px solid var(--line); border-radius: 14px; background: var(--surface-strong); box-shadow: var(--small-shadow); }
       .meal-head {
         display: grid;
-        grid-template-columns: auto minmax(0, 1fr) auto;
+        grid-template-columns: 1fr auto;
         align-items: center;
         gap: 12px;
-        min-height: 56px;
-        padding: 10px 13px;
+        min-height: 50px;
+        padding: 9px 12px;
         cursor: pointer;
         list-style: none;
       }
@@ -382,10 +389,10 @@
         font-size: 16px;
         font-weight: 900;
       }
-      .tools { display: grid; gap: 10px; }
+      .tools { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
       details {
         border: 1px solid var(--line);
-        border-radius: 16px;
+        border-radius: 14px;
         background: var(--surface);
         box-shadow: var(--small-shadow);
         overflow: hidden;
@@ -394,8 +401,8 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        min-height: 50px;
-        padding: 10px 14px;
+        min-height: 42px;
+        padding: 8px 12px;
         cursor: pointer;
         font-weight: 900;
         list-style: none;
@@ -439,13 +446,6 @@
         align-items: end;
         margin-bottom: 12px;
       }
-      .side-rail .library-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .side-rail .library-form label:first-child,
-      .side-rail .library-form .btn { grid-column: 1 / -1; }
-      .side-rail .sync-row { grid-template-columns: 1fr 1fr; }
-      .side-rail .sync-field { grid-column: 1 / -1; }
-      .side-rail .library-item { grid-template-columns: minmax(100px, 1fr) 96px 42px; }
-      .side-rail .library-macros { grid-column: 1 / 3; }
       .library-list { display: grid; gap: 7px; max-height: 330px; overflow-y: auto; }
       .library-item {
         display: grid;
@@ -459,8 +459,15 @@
       .library-macros { color: var(--muted); font-size: 11px; font-weight: 800; }
       .empty { padding: 18px; color: var(--muted); text-align: center; font-weight: 800; }
       @media (max-width: 980px) {
-        .app-grid { grid-template-columns: 1fr; }
-        .side-rail { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .app-grid {
+          grid-template-columns: 1fr;
+          grid-template-areas:
+            "add"
+            "summary"
+            "meals"
+            "tools";
+        }
+        .tools { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       }
       @media (max-width: 760px) {
         main { width: min(100% - 16px, 820px); padding-top: 12px; }
@@ -475,7 +482,7 @@
         .metric strong { font-size: 22px; }
         .add-controls { grid-template-columns: 1fr 1fr; }
         .selected-food, .add-controls .btn { grid-column: 1 / -1; }
-        .side-rail { grid-template-columns: 1fr; }
+        .meals, .tools { grid-template-columns: 1fr; }
         .meal-row { grid-template-columns: minmax(0, 1fr) auto 34px; }
         .meal-head { grid-template-columns: auto minmax(0, 1fr) auto; gap: 7px; padding-inline: 9px; }
         .meal-totals { font-size: 10px; line-height: 1.35; }
@@ -514,55 +521,52 @@
       </header>
 
       <div class="app-grid">
-        <div class="left-stack">
-          <section class="panel summary-panel" aria-label="今日摄入总览">
-            <div class="panel-body">
-              <div class="metrics" id="metrics"></div>
-            </div>
-          </section>
-
-          <section class="panel meals-panel" aria-label="当天三餐记录">
-            <div class="panel-body">
-              <div class="section-title">
-                <h2>当天记录</h2>
-                <span class="field-label">展开查看或删除食物</span>
-              </div>
-              <div class="meals" id="mealSummary"></div>
-            </div>
-          </section>
-        </div>
-
-        <aside class="side-rail" aria-label="添加和管理">
-          <section class="quick-add" aria-label="添加食物">
-            <div class="section-title">
-              <h2>添加食物</h2>
-              <span class="field-label" id="foodCount"></span>
-            </div>
-            <div class="category-tabs" role="tablist" aria-label="食物分类">
-              <button class="category-tab active" data-category="carb" type="button">碳水</button>
-              <button class="category-tab" data-category="protein" type="button">蛋白质</button>
-            </div>
-            <label class="food-search">
-              <span class="field-label">搜索食物</span>
-              <input id="foodSearch" autocomplete="off" placeholder="输入名称，例如：鸡蛋、米饭" />
+        <section class="quick-add" aria-label="添加食物">
+          <div class="section-title">
+            <h2>添加食物</h2>
+            <span class="field-label" id="foodCount"></span>
+          </div>
+          <div class="category-tabs" role="tablist" aria-label="食物分类">
+            <button class="category-tab active" data-category="carb" type="button">碳水</button>
+            <button class="category-tab" data-category="protein" type="button">蛋白质</button>
+          </div>
+          <label class="food-search">
+            <span class="field-label">搜索食物</span>
+            <input id="foodSearch" autocomplete="off" placeholder="输入名称，例如：鸡蛋、米饭" />
+          </label>
+          <div class="food-buttons" id="foodButtons"></div>
+          <div class="add-controls">
+            <div class="selected-food" id="selectedFood">先点击上方食物</div>
+            <label>
+              <span class="field-label">餐次</span>
+              <select id="mealSelect"></select>
             </label>
-            <div class="food-buttons" id="foodButtons"></div>
-            <div class="add-controls">
-              <div class="selected-food" id="selectedFood">先点击上方食物</div>
-              <label>
-                <span class="field-label">餐次</span>
-                <select id="mealSelect"></select>
-              </label>
-              <label>
-                <span class="field-label">份数</span>
-                <input id="portion" type="number" min="0.1" step="0.5" value="1" />
-              </label>
-              <button class="btn primary" id="addDailyFood" type="button">添加</button>
-            </div>
-          </section>
+            <label>
+              <span class="field-label">份数</span>
+              <input id="portion" type="number" min="0.1" step="0.5" value="1" />
+            </label>
+            <button class="btn primary" id="addDailyFood" type="button">添加</button>
+          </div>
+        </section>
 
-          <section class="tools">
-            <details open>
+        <section class="panel summary-panel" aria-label="今日摄入总览">
+          <div class="panel-body">
+            <div class="metrics" id="metrics"></div>
+          </div>
+        </section>
+
+        <section class="panel meals-panel" aria-label="当天三餐记录">
+          <div class="panel-body">
+            <div class="section-title">
+              <h2>当天记录</h2>
+              <span class="field-label">展开查看或删除食物</span>
+            </div>
+            <div class="meals" id="mealSummary"></div>
+          </div>
+        </section>
+
+          <section class="tools" aria-label="低频工具">
+            <details>
               <summary>月历</summary>
               <div class="detail-body">
                 <div class="calendar-head">
@@ -628,7 +632,6 @@
               </div>
             </details>
           </section>
-        </aside>
       </div>
     </main>
 
