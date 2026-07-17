@@ -248,6 +248,25 @@
         font-weight: 900;
       }
       .category-tab.active { color: #0f6b35; background: var(--surface-strong); box-shadow: var(--small-shadow); }
+      .food-search {
+        position: relative;
+        margin-top: 10px;
+      }
+      .food-search input {
+        padding-left: 34px;
+        background: var(--surface-strong);
+      }
+      .food-search::before {
+        content: "⌕";
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        z-index: 1;
+        transform: translateY(-50%);
+        color: var(--muted);
+        font-size: 17px;
+        font-weight: 900;
+      }
       .food-buttons {
         display: flex;
         flex-wrap: wrap;
@@ -264,8 +283,14 @@
         background: var(--surface-strong);
         font-size: 13px;
         font-weight: 800;
+        text-align: left;
       }
       .food-chip.active { border-color: var(--green); color: #0f6b35; background: rgba(50, 199, 89, 0.12); }
+      .food-chip strong, .food-chip small { display: block; }
+      .food-chip small { margin-top: 3px; color: var(--muted); font-size: 10px; font-weight: 800; }
+      .food-chip .freq {
+        color: var(--green);
+      }
       .add-controls {
         display: grid;
         grid-template-columns: minmax(0, 1fr) 122px 96px 92px;
@@ -302,23 +327,43 @@
       .meal-head::after { content: "+"; color: var(--muted); font-size: 19px; font-weight: 900; }
       .meal-section[open] .meal-head { border-bottom: 1px solid var(--line); }
       .meal-section[open] .meal-head::after { content: "−"; }
+      .meal-title { display: inline-flex; align-items: center; gap: 8px; }
+      .meal-dot {
+        display: inline-block;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: var(--soft);
+        box-shadow: inset 0 0 0 9px var(--surface-strong);
+      }
+      .meal-section[data-meal="morning"] .meal-dot { background: rgba(255, 149, 0, 0.28); }
+      .meal-section[data-meal="noon"] .meal-dot { background: rgba(52, 120, 246, 0.28); }
+      .meal-section[data-meal="evening"] .meal-dot { background: rgba(142, 141, 246, 0.3); }
       .meal-name { font-size: 15px; font-weight: 900; }
       .meal-totals { min-width: 0; color: var(--muted); font-size: 11px; font-weight: 800; text-align: right; }
       .meal-content { padding: 0 11px; }
-      .meal-empty { padding: 12px 0; color: var(--empty); font-size: 13px; }
+      .meal-empty { padding: 14px 2px; color: var(--empty); font-size: 13px; font-weight: 700; }
       .meal-row {
         display: grid;
-        grid-template-columns: minmax(220px, 1fr) minmax(170px, auto) 38px;
-        gap: 8px;
+        grid-template-columns: minmax(0, 1fr) auto 34px;
+        gap: 7px 10px;
         align-items: center;
-        padding: 8px 0;
+        padding: 10px 0;
         border-bottom: 1px solid var(--row-line);
       }
-      .food-line { display: flex; align-items: center; gap: 7px; min-width: 0; }
+      .food-line { display: flex; align-items: center; gap: 8px; min-width: 0; }
       .food-name { min-width: 0; font-weight: 900; overflow-wrap: anywhere; }
       .portion-inline { display: inline-flex; align-items: center; gap: 4px; color: var(--blue); font-size: 12px; font-weight: 900; white-space: nowrap; }
-      .portion-input { width: 64px; min-height: 34px; padding: 5px 7px; text-align: center; }
-      .row-macros { color: var(--muted); font-size: 11px; font-weight: 800; white-space: nowrap; }
+      .portion-input { width: 58px; min-height: 32px; padding: 5px 7px; text-align: center; }
+      .row-kcal { color: var(--ink); font-size: 17px; font-weight: 900; white-space: nowrap; }
+      .row-kcal span { color: var(--muted); font-size: 10px; font-weight: 800; }
+      .row-macros {
+        grid-column: 1 / 3;
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 800;
+        white-space: normal;
+      }
       .delete-btn {
         width: 34px;
         height: 34px;
@@ -421,12 +466,12 @@
         .add-controls { grid-template-columns: 1fr 1fr; }
         .selected-food, .add-controls .btn { grid-column: 1 / -1; }
         .side-rail { grid-template-columns: 1fr; }
-        .meal-row { grid-template-columns: minmax(0, 1fr) 34px; }
+        .meal-row { grid-template-columns: minmax(0, 1fr) auto 34px; }
         .meal-head { grid-template-columns: auto minmax(0, 1fr) auto; gap: 7px; padding-inline: 9px; }
         .meal-totals { font-size: 10px; line-height: 1.35; }
         .food-line { flex-wrap: wrap; }
-        .row-macros { grid-column: 1; grid-row: 2; white-space: normal; }
-        .delete-btn { grid-column: 2; grid-row: 1 / 3; }
+        .row-macros { grid-column: 1 / 3; grid-row: 2; white-space: normal; }
+        .delete-btn { grid-column: 3; grid-row: 1 / 3; }
         .sync-row { grid-template-columns: 1fr 1fr; }
         .sync-field { grid-column: 1 / -1; }
         .library-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -487,6 +532,10 @@
               <button class="category-tab active" data-category="carb" type="button">碳水</button>
               <button class="category-tab" data-category="protein" type="button">蛋白质</button>
             </div>
+            <label class="food-search">
+              <span class="field-label">搜索食物</span>
+              <input id="foodSearch" autocomplete="off" placeholder="输入名称，例如：鸡蛋、米饭" />
+            </label>
             <div class="food-buttons" id="foodButtons"></div>
             <div class="add-controls">
               <div class="selected-food" id="selectedFood">先点击上方食物</div>
@@ -648,7 +697,7 @@
       const els = {
         selectedDate: $("#selectedDate"), prevDay: $("#prevDay"), nextDay: $("#nextDay"),
         themeToggle: $("#themeToggle"),
-        metrics: $("#metrics"), foodCount: $("#foodCount"), foodButtons: $("#foodButtons"),
+        metrics: $("#metrics"), foodCount: $("#foodCount"), foodSearch: $("#foodSearch"), foodButtons: $("#foodButtons"),
         selectedFood: $("#selectedFood"), mealSelect: $("#mealSelect"), portion: $("#portion"),
         addDailyFood: $("#addDailyFood"), mealSummary: $("#mealSummary"),
         weight: $("#weight"), carbFactor: $("#carbFactor"), proteinFactor: $("#proteinFactor"), fatFactor: $("#fatFactor"),
@@ -728,6 +777,23 @@
       function escapeHtml(value) {
         return String(value).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
       }
+      function foodUsageStats() {
+        const stats = new Map();
+        Object.entries(state.days || {}).forEach(([date, rows]) => {
+          (rows || []).forEach((row) => {
+            const key = row.foodId || state.library.find((food) => food.name === row.name)?.id;
+            if (!key) return;
+            const current = stats.get(key) || { count: 0, lastDate: "" };
+            current.count += numberValue(row.portion) || 1;
+            if (date > current.lastDate) current.lastDate = date;
+            stats.set(key, current);
+          });
+        });
+        return stats;
+      }
+      function searchText(value) {
+        return String(value || "").trim().toLocaleLowerCase("zh-CN");
+      }
 
       function renderMetrics() {
         const eaten = sumRows(dailyRows());
@@ -777,14 +843,28 @@
         `;
       }
       function renderFoodButtons() {
-        const foods = sortFoodsByName(
-          state.library.filter((food) => food.category === activeCategory),
-        );
+        const usage = foodUsageStats();
+        const query = searchText(els.foodSearch.value);
+        const baseFoods = state.library.filter((food) => food.category === activeCategory);
+        const foods = query
+          ? sortFoodsByName(baseFoods.filter((food) => searchText(food.name).includes(query)))
+          : sortFoodsByName(baseFoods).sort((left, right) => {
+              const leftUsage = usage.get(left.id) || { count: 0, lastDate: "" };
+              const rightUsage = usage.get(right.id) || { count: 0, lastDate: "" };
+              if (rightUsage.count !== leftUsage.count) return rightUsage.count - leftUsage.count;
+              return rightUsage.lastDate.localeCompare(leftUsage.lastDate);
+            });
         if (!foods.some((food) => food.id === selectedFoodId)) selectedFoodId = "";
-        els.foodCount.textContent = `${foods.length} 项`;
+        els.foodCount.textContent = query ? `${foods.length} 个结果` : `${foods.length} 项`;
         els.foodButtons.innerHTML = foods.length
-          ? foods.map((food) => `<button class="food-chip ${food.id === selectedFoodId ? "active" : ""}" data-food-id="${food.id}" type="button">${escapeHtml(food.name)}</button>`).join("")
-          : `<div class="empty">这个分类还没有食物</div>`;
+          ? foods.map((food) => {
+              const stat = usage.get(food.id);
+              const meta = stat?.count
+                ? `<span class="freq">常吃 · ${format(stat.count, 1)}份</span>`
+                : `${format(food.kcal, 0)} kcal / 份`;
+              return `<button class="food-chip ${food.id === selectedFoodId ? "active" : ""}" data-food-id="${food.id}" type="button"><strong>${escapeHtml(food.name)}</strong><small>${meta}</small></button>`;
+            }).join("")
+          : `<div class="empty">${query ? "没有找到这个食物" : "这个分类还没有食物"}</div>`;
         const selected = state.library.find((food) => food.id === selectedFoodId);
         els.selectedFood.innerHTML = selected ? `已选择：<b>${escapeHtml(selected.name)}</b>` : "先点击上方食物";
       }
@@ -802,14 +882,15 @@
                 <span class="food-name">${escapeHtml(row.name)}</span>
                 <span class="portion-inline">× <input class="portion-input" data-portion type="number" min="0.1" step="0.5" value="${format(row.portion)}" aria-label="${escapeHtml(row.name)}份数" /> 份</span>
               </div>
-              <div class="row-macros">${format(row.carb)}g 碳水 · ${format(row.protein)}g 蛋白质 · ${format(row.fat)}g 脂肪 · ${format(row.kcal, 0)} kcal</div>
+              <div class="row-kcal">${format(row.kcal, 0)} <span>kcal</span></div>
+              <div class="row-macros">${format(row.carb)}g 碳水 · ${format(row.protein)}g 蛋白质 · ${format(row.fat)}g 脂肪</div>
               <button class="delete-btn" data-delete="${row.id}" type="button" aria-label="删除${escapeHtml(row.name)}">×</button>
             </div>
-          `).join("") : `<div class="meal-empty">尚未记录</div>`;
+          `).join("") : `<div class="meal-empty">还没记录，先从右侧添加食物。</div>`;
           return `
             <details class="meal-section" data-meal="${meal.id}" ${openMealIds.has(meal.id) ? "open" : ""}>
               <summary class="meal-head">
-                <span class="meal-name">${meal.name}</span>
+                <span class="meal-title"><span class="meal-dot" aria-hidden="true"></span><span class="meal-name">${meal.name}</span></span>
                 <span class="meal-totals">${format(total.carb)}g 碳水 · ${format(total.protein)}g 蛋白质 · ${format(total.fat)}g 脂肪 · ${format(total.kcal, 0)} kcal</span>
               </summary>
               <div class="meal-content">${content}</div>
@@ -888,6 +969,7 @@
         selectedFoodId = button.dataset.foodId;
         renderFoodButtons();
       });
+      els.foodSearch.addEventListener("input", renderFoodButtons);
       els.metrics.addEventListener("click", (event) => {
         if (!event.target.closest("#editGoal")) return;
         const details = els.weight.closest("details");
@@ -909,6 +991,7 @@
         els.portion.value = "1";
         saveState();
         renderMetrics();
+        renderFoodButtons();
         renderMeals();
         renderCalendar();
       });
