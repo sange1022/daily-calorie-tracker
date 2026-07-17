@@ -182,13 +182,14 @@
       .metric {
         min-width: 0;
         display: grid;
-        grid-template-columns: 42px minmax(0, 1fr);
-        align-items: center;
-        gap: 8px;
+        justify-items: center;
+        align-items: start;
+        gap: 7px;
         padding: 8px;
         border: 1px solid var(--line);
         border-radius: 14px;
         background: var(--surface-strong);
+        text-align: center;
       }
       .mini-ring {
         display: grid;
@@ -211,7 +212,7 @@
         background: var(--surface-strong);
       }
       .metric span { display: block; color: var(--muted); font-size: 11px; font-weight: 800; }
-      .metric strong { display: block; margin-top: 3px; font-size: 18px; line-height: 1; letter-spacing: 0; }
+      .metric strong { display: block; margin-top: 3px; font-size: 18px; line-height: 1.05; letter-spacing: 0; }
       .metric small { display: block; margin-top: 4px; color: var(--muted); font-size: 10px; font-weight: 700; }
       .metric[data-kind="carb"] { --tone: var(--orange); }
       .metric[data-kind="protein"] { --tone: var(--green); }
