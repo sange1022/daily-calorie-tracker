@@ -300,9 +300,6 @@
       }
       .food-chip strong, .food-chip small { display: block; }
       .food-chip small { margin-top: 3px; color: var(--muted); font-size: 10px; font-weight: 800; }
-      .food-chip .freq {
-        color: var(--green);
-      }
       .add-controls {
         display: grid;
         grid-template-columns: minmax(0, 1fr) 122px 96px 92px;
@@ -797,7 +794,7 @@
             const key = row.foodId || state.library.find((food) => food.name === row.name)?.id;
             if (!key) return;
             const current = stats.get(key) || { count: 0, lastDate: "" };
-            current.count += numberValue(row.portion) || 1;
+            current.count += 1;
             if (date > current.lastDate) current.lastDate = date;
             stats.set(key, current);
           });
@@ -871,10 +868,7 @@
         els.foodCount.textContent = query ? `${foods.length} 个结果` : `${foods.length} 项`;
         els.foodButtons.innerHTML = foods.length
           ? foods.map((food) => {
-              const stat = usage.get(food.id);
-              const meta = stat?.count
-                ? `<span class="freq">常吃 · ${format(stat.count, 1)}份</span>`
-                : `${format(food.kcal, 0)} kcal / 份`;
+              const meta = `${format(food.kcal, 0)} kcal / 份`;
               return `<button class="food-chip ${food.id === selectedFoodId ? "active" : ""}" data-food-id="${food.id}" type="button"><strong>${escapeHtml(food.name)}</strong><small>${meta}</small></button>`;
             }).join("")
           : `<div class="empty">${query ? "没有找到这个食物" : "这个分类还没有食物"}</div>`;
