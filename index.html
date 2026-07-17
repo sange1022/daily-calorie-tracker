@@ -134,7 +134,7 @@
         gap: 14px;
         align-items: start;
       }
-      .summary-panel { grid-area: summary; }
+      .summary-panel { grid-area: summary; align-self: stretch; display: grid; }
       .quick-add { grid-area: add; }
       .meals-panel { grid-area: meals; }
       .tools { grid-area: tools; }
@@ -146,6 +146,7 @@
         backdrop-filter: blur(18px);
       }
       .panel-body { padding: 14px; }
+      .summary-panel .panel-body { display: grid; align-items: center; }
       .metrics {
         display: grid;
         grid-template-columns: 184px minmax(0, 1fr);
@@ -390,6 +391,8 @@
         font-weight: 900;
       }
       .tools { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+      .tools details:has(.library-form)[open] { grid-column: 1 / -1; }
+      .tools details:has(.settings-grid)[open] { grid-column: span 2; }
       details {
         border: 1px solid var(--line);
         border-radius: 14px;
@@ -412,8 +415,9 @@
       details[open] summary { border-bottom: 1px solid var(--line); }
       details[open] summary::after { content: "−"; }
       .detail-body { padding: 13px; }
-      .settings-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
-      .settings-note { margin: 11px 0 0; color: var(--muted); font-size: 12px; }
+      .settings-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 7px; }
+      .settings-grid input { min-height: 34px; padding-block: 6px; }
+      .settings-note { margin: 8px 0 0; color: var(--muted); font-size: 11px; }
       .sync-row { display: grid; grid-template-columns: minmax(180px, 1fr) auto auto; gap: 8px; align-items: end; }
       .sync-field { position: relative; }
       .sync-field input { padding-right: 82px; font-family: ui-monospace, monospace; text-transform: uppercase; }
@@ -441,15 +445,15 @@
       .calendar-actions { display: flex; justify-content: flex-end; margin-top: 10px; }
       .library-form {
         display: grid;
-        grid-template-columns: minmax(130px, 1.3fr) repeat(4, minmax(70px, .7fr)) 105px 74px;
-        gap: 7px;
+        grid-template-columns: minmax(180px, 1.4fr) repeat(4, minmax(92px, .8fr)) 130px 90px;
+        gap: 8px;
         align-items: end;
         margin-bottom: 12px;
       }
-      .library-list { display: grid; gap: 7px; max-height: 330px; overflow-y: auto; }
+      .library-list { display: grid; gap: 7px; max-height: 380px; overflow-y: auto; }
       .library-item {
         display: grid;
-        grid-template-columns: minmax(120px, 1fr) 105px minmax(240px, 1.2fr) 62px;
+        grid-template-columns: minmax(180px, 1fr) 130px minmax(320px, 1.4fr) 72px;
         gap: 8px;
         align-items: center;
         border-bottom: 1px solid var(--row-line);
@@ -468,6 +472,7 @@
             "tools";
         }
         .tools { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .tools details:has(.settings-grid)[open] { grid-column: 1 / -1; }
       }
       @media (max-width: 760px) {
         main { width: min(100% - 16px, 820px); padding-top: 12px; }
@@ -491,6 +496,7 @@
         .delete-btn { grid-column: 3; grid-row: 1 / 3; }
         .sync-row { grid-template-columns: 1fr 1fr; }
         .sync-field { grid-column: 1 / -1; }
+        .settings-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         .library-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         .library-form label:first-child, .library-form .btn { grid-column: 1 / -1; }
         .library-item { grid-template-columns: minmax(100px, 1fr) 96px 42px; }
