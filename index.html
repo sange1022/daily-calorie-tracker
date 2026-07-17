@@ -31,18 +31,18 @@
       }
       :root[data-theme="dark"] {
         color-scheme: dark;
-        --bg: #0f1115;
-        --surface: rgba(27, 30, 36, 0.86);
-        --surface-strong: #1b1e24;
-        --control: #22262e;
-        --ink: #f3f5f7;
-        --muted: #a0a7b2;
-        --line: rgba(255, 255, 255, 0.11);
-        --soft: #20242c;
-        --quick: #10291a;
-        --quick-line: rgba(50, 199, 89, 0.34);
+        --bg: #0d1015;
+        --surface: rgba(31, 35, 43, 0.92);
+        --surface-strong: #242932;
+        --control: #2b313c;
+        --ink: #f8fafc;
+        --muted: #c3cad4;
+        --line: rgba(255, 255, 255, 0.16);
+        --soft: #2d3440;
+        --quick: #14301f;
+        --quick-line: rgba(79, 218, 121, 0.48);
         --row-line: rgba(255, 255, 255, 0.08);
-        --empty: #7f8792;
+        --empty: #aeb6c2;
         --blue: #6aa4ff;
         --green: #4fda79;
         --orange: #ffb340;
@@ -51,6 +51,11 @@
         --on-blue: #07111c;
         --shadow: 0 18px 45px rgba(0, 0, 0, 0.28);
         --small-shadow: 0 8px 24px rgba(0, 0, 0, 0.24);
+      }
+      :root[data-theme="dark"] body {
+        background:
+          radial-gradient(circle at top left, rgba(106, 164, 255, 0.1), transparent 34%),
+          linear-gradient(180deg, var(--bg), var(--bg));
       }
       * { box-sizing: border-box; }
       body {
@@ -100,6 +105,7 @@
         color: var(--ink);
         background: var(--control);
       }
+      input::placeholder { color: color-mix(in srgb, var(--muted), transparent 18%); }
       input:focus-visible, select:focus-visible, button:focus-visible, summary:focus-visible {
         outline: 3px solid rgba(36, 117, 217, 0.2);
         outline-offset: 2px;
@@ -248,6 +254,8 @@
         font-weight: 900;
       }
       .category-tab.active { color: #0f6b35; background: var(--surface-strong); box-shadow: var(--small-shadow); }
+      :root[data-theme="dark"] .category-tabs { background: rgba(255, 255, 255, 0.06); }
+      :root[data-theme="dark"] .category-tab.active { color: var(--green); background: #26352d; }
       .food-search {
         position: relative;
         margin-top: 10px;
@@ -286,6 +294,10 @@
         text-align: left;
       }
       .food-chip.active { border-color: var(--green); color: #0f6b35; background: rgba(50, 199, 89, 0.12); }
+      :root[data-theme="dark"] .food-chip.active {
+        color: var(--green);
+        background: rgba(79, 218, 121, 0.16);
+      }
       .food-chip strong, .food-chip small { display: block; }
       .food-chip small { margin-top: 3px; color: var(--muted); font-size: 10px; font-weight: 800; }
       .food-chip .freq {
@@ -418,6 +430,7 @@
         text-align: left;
       }
       .day.muted { opacity: 0.35; }
+      :root[data-theme="dark"] .day.muted { opacity: 0.58; }
       .day.active { border-color: var(--blue); box-shadow: inset 0 0 0 1px var(--blue); }
       .day-number { display: block; font-size: 11px; font-weight: 900; }
       .day-kcal { display: block; margin-top: 5px; color: var(--orange); font-size: 9px; font-weight: 900; }
