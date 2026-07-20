@@ -138,8 +138,8 @@
         align-items: start;
       }
       .app-grid > *, .tools > *, .quick-add > * { min-width: 0; }
-      .summary-panel { grid-area: summary; align-self: stretch; display: grid; }
-      .quick-add { grid-area: add; }
+      .summary-panel { grid-area: summary; align-self: stretch; display: grid; min-height: 480px; }
+      .quick-add { grid-area: add; min-height: 480px; }
       .meals-panel { grid-area: meals; }
       .tools { grid-area: tools; }
       .panel {
@@ -235,6 +235,8 @@
       .remaining-item span { display: block; color: var(--muted); font-size: 11px; font-weight: 800; }
       .remaining-item strong { display: block; margin-top: 4px; font-size: 17px; }
       .quick-add {
+        display: flex;
+        flex-direction: column;
         border: 1px solid var(--quick-line);
         border-radius: 16px;
         padding: 15px;
@@ -292,10 +294,12 @@
       }
       .food-buttons {
         display: flex;
+        flex: 1 0 250px;
         flex-wrap: wrap;
+        align-content: flex-start;
         gap: 7px;
-        max-height: 170px;
-        overflow-y: auto;
+        max-height: none;
+        overflow: visible;
         padding: 10px 1px;
       }
       .food-chip {
@@ -314,8 +318,7 @@
         color: var(--green);
         background: rgba(79, 218, 121, 0.16);
       }
-      .food-chip strong, .food-chip small { display: block; }
-      .food-chip small { margin-top: 3px; color: var(--muted); font-size: 11px; font-weight: 800; }
+      .food-chip strong { display: block; }
       .add-controls {
         display: grid;
         grid-template-columns: minmax(0, 1fr) 122px 96px 92px;
@@ -506,11 +509,15 @@
             "meals"
             "tools";
         }
+        .quick-add { min-height: 440px; }
+        .summary-panel { min-height: 0; }
         .tools { grid-template-columns: repeat(2, minmax(0, 1fr)); min-width: 0; }
       }
       @media (max-width: 760px) {
         main { width: min(100% - 16px, 820px); padding-top: 10px; }
         .topbar { display: grid; gap: 10px; }
+        .quick-add { min-height: 0; }
+        .food-buttons { flex-basis: 180px; }
         h1 { font-size: 23px; }
         .header-actions { display: grid; grid-template-columns: 1fr auto; gap: 7px; }
         .date-nav { justify-content: space-between; }
@@ -906,10 +913,7 @@
         if (!foods.some((food) => food.id === selectedFoodId)) selectedFoodId = "";
         els.foodCount.textContent = query ? `${foods.length} 个结果` : `${foods.length} 项`;
         els.foodButtons.innerHTML = foods.length
-          ? foods.map((food) => {
-              const meta = `${format(food.kcal, 0)} kcal / 份`;
-              return `<button class="food-chip ${food.id === selectedFoodId ? "active" : ""}" data-food-id="${food.id}" type="button"><strong>${escapeHtml(food.name)}</strong><small>${meta}</small></button>`;
-            }).join("")
+          ? foods.map((food) => `<button class="food-chip ${food.id === selectedFoodId ? "active" : ""}" data-food-id="${food.id}" type="button"><strong>${escapeHtml(food.name)}</strong></button>`).join("")
           : `<div class="empty">${query ? "没有找到这个食物" : "这个分类还没有食物"}</div>`;
         const selected = state.library.find((food) => food.id === selectedFoodId);
         els.selectedFood.innerHTML = selected ? `已选择：<b>${escapeHtml(selected.name)}</b>` : "先点击上方食物";
@@ -977,7 +981,10 @@
           return `<button class="day ${key === selectedDate ? "active" : ""}" data-date="${key}" type="button"><span class="day-number">${date.getDate()}</span><span class="day-week">${weekdays[date.getDay()]}</span><span class="day-kcal">${kcal ? `${format(kcal, 0)}` : ""}</span></button>`;
         }).join("");
         els.calendar.innerHTML = cells;
-        els.calendar.querySelector(".day.active")?.scrollIntoView({ block: "nearest", inline: "center" });
+        const activeDay = els.calendar.querySelector(".day.active");
+        if (activeDay) {
+          els.calendar.scrollLeft = activeDay.offsetLeft - (els.calendar.clientWidth - activeDay.offsetWidth) / 2;
+        }
       }
       function renderAll() {
         els.selectedDate.value = selectedDate;
