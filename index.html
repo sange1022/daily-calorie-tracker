@@ -449,21 +449,20 @@
       .calendar-head { display: grid; grid-template-columns: 34px 1fr 34px auto; gap: 7px; align-items: center; }
       .month-title { text-align: center; font-weight: 900; }
       .calendar {
-        display: flex;
+        display: grid;
+        grid-template-columns: repeat(16, minmax(0, 1fr));
         gap: 6px;
-        overflow-x: auto;
         padding: 8px 1px 1px;
-        scroll-snap-type: x proximity;
       }
       .day {
-        flex: 0 0 54px;
-        min-height: 48px;
+        width: 100%;
+        min-width: 0;
+        min-height: 52px;
         border: 1px solid var(--line);
         border-radius: 11px;
         padding: 6px 5px;
         background: var(--control);
         text-align: center;
-        scroll-snap-align: start;
       }
       .day.active { border-color: var(--blue); color: #fff; background: var(--blue); box-shadow: 0 3px 10px color-mix(in srgb, var(--blue), transparent 68%); }
       .day.active .day-week, .day.active .day-kcal { color: rgba(255, 255, 255, 0.82); }
@@ -544,7 +543,7 @@
         .library-form label:first-child, .library-form .btn { grid-column: 1 / -1; }
         .library-item { grid-template-columns: minmax(100px, 1fr) 96px 42px; }
         .library-macros { grid-column: 1 / 3; }
-        .calendar { gap: 3px; }
+        .calendar { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
         .day { min-height: 43px; padding: 4px; }
       }
     </style>
@@ -981,10 +980,6 @@
           return `<button class="day ${key === selectedDate ? "active" : ""}" data-date="${key}" type="button"><span class="day-number">${date.getDate()}</span><span class="day-week">${weekdays[date.getDay()]}</span><span class="day-kcal">${kcal ? `${format(kcal, 0)}` : ""}</span></button>`;
         }).join("");
         els.calendar.innerHTML = cells;
-        const activeDay = els.calendar.querySelector(".day.active");
-        if (activeDay) {
-          els.calendar.scrollLeft = activeDay.offsetLeft - (els.calendar.clientWidth - activeDay.offsetWidth) / 2;
-        }
       }
       function renderAll() {
         els.selectedDate.value = selectedDate;
