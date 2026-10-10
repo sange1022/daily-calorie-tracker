@@ -2,7 +2,8 @@
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#f2f2f7" />
     <link rel="icon" href="data:," />
     <title>每日卡路里记录</title>
     <style>
@@ -90,7 +91,7 @@
         font-size: 23px;
         font-weight: 900;
       }
-      h1 { margin-bottom: 3px; font-size: 24px; line-height: 1.12; letter-spacing: -0.02em; }
+      h1 { margin-bottom: 3px; font-size: 24px; line-height: 1.12; letter-spacing: 0; }
       .subtitle { margin-bottom: 0; color: var(--muted); font-size: 13px; font-weight: 500; }
       .header-actions { display: flex; align-items: center; gap: 7px; }
       .date-nav { display: flex; align-items: center; gap: 7px; }
@@ -124,7 +125,22 @@
       .icon-btn:hover, .btn:hover { background: color-mix(in srgb, var(--control), var(--ink) 4%); }
       .icon-btn:active, .btn:active, .category-tab:active, .food-chip:active, .day:active, summary:active { transform: scale(0.97); }
       .icon-btn { width: 40px; padding: 0; font-size: 20px; }
-      .theme-toggle { width: auto; min-width: 50px; padding: 0 11px; font-size: 13px; }
+      .theme-toggle { font-size: 23px; }
+      .sync-shortcut { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+      .sync-shortcut::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--muted); }
+      .sync-shortcut[data-state="synced"]::before { background: var(--green); }
+      .sync-shortcut[data-state="error"]::before { background: var(--red); }
+      button:disabled { cursor: default; opacity: .45; transform: none !important; }
+      .ui-icon { display: inline-block; flex-shrink: 0; width: 20px; height: 20px; background: currentColor; mask: var(--icon) center / contain no-repeat; -webkit-mask: var(--icon) center / contain no-repeat; vertical-align: middle; }
+      .i-moon { --icon: url('./assets/lucide/moon.svg'); }
+      .i-sun { --icon: url('./assets/lucide/sun.svg'); }
+      .i-plus { --icon: url('./assets/lucide/plus.svg'); }
+      .i-minus { --icon: url('./assets/lucide/minus.svg'); }
+      .i-settings { --icon: url('./assets/lucide/settings-2.svg'); }
+      .i-chart { --icon: url('./assets/lucide/chart-pie.svg'); }
+      .i-utensils { --icon: url('./assets/lucide/utensils.svg'); }
+      .i-x { --icon: url('./assets/lucide/x.svg'); }
+      .mobile-nav { display: none; }
       .btn.primary { border-color: var(--blue); color: var(--on-blue); background: var(--blue); }
       .btn.danger, .delete-btn { color: var(--red); }
       .app-grid {
@@ -139,7 +155,7 @@
       }
       .app-grid > *, .tools > *, .quick-add > * { min-width: 0; }
       .summary-panel { grid-area: summary; align-self: stretch; display: grid; min-height: 480px; }
-      .quick-add { grid-area: add; min-height: 480px; }
+      .quick-add { grid-area: add; min-height: 480px; align-self: stretch; }
       .meals-panel { grid-area: meals; }
       .tools { grid-area: tools; }
       .panel {
@@ -151,13 +167,17 @@
         -webkit-backdrop-filter: blur(24px) saturate(160%);
       }
       .panel-body { padding: 15px; }
-      .summary-panel .panel-body { display: grid; align-items: center; }
+      .summary-panel .panel-body { display: flex; flex-direction: column; justify-content: space-between; gap: 20px; }
       .metrics {
         display: grid;
-        grid-template-columns: 184px minmax(0, 1fr);
-        gap: 16px;
+        gap: 20px;
         align-items: center;
       }
+      .intake-main { display: grid; grid-template-columns: 184px minmax(0, 1fr); align-items: center; gap: 22px; }
+      .calorie-context { min-width: 0; }
+      .calorie-context span { color: var(--muted); font-size: 13px; }
+      .calorie-context strong { display: block; font-size: 30px; line-height: 1.2; margin: 5px 0 12px; overflow-wrap: anywhere; }
+      .calorie-context small { font-size: 12px; color: var(--muted); }
       .calorie-ring {
         position: relative;
         display: grid;
@@ -179,10 +199,9 @@
       .ring-center { position: relative; text-align: center; }
       .ring-center strong { display: block; font-size: 38px; line-height: 1; letter-spacing: 0; }
       .ring-center span { display: block; margin-top: 6px; color: var(--muted); font-size: 12px; font-weight: 800; }
-      .summary-side { display: grid; gap: 10px; }
       .summary-title { display: flex; align-items: start; justify-content: space-between; gap: 12px; }
       .summary-title h2 { margin: 0; font-size: 19px; letter-spacing: 0; }
-      .summary-title p { margin: 5px 0 0; color: var(--muted); font-size: 12px; font-weight: 700; }
+      .summary-title p { margin: 5px 0 0; color: var(--muted); font-size: 12px; font-weight: 500; }
       .macro-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
       .metric {
         min-width: 0;
@@ -199,11 +218,11 @@
       .mini-ring {
         display: grid;
         place-items: center;
-        width: 42px;
+        width: 52px;
         aspect-ratio: 1;
         border-radius: 50%;
         background: conic-gradient(var(--tone) calc(var(--pct) * 1%), rgba(148, 163, 184, 0.22) 0);
-        color: var(--tone);
+        color: var(--ink);
         font-size: 11px;
         font-weight: 900;
       }
@@ -211,29 +230,18 @@
         content: attr(data-percent);
         display: grid;
         place-items: center;
-        width: 31px;
+        width: 40px;
         aspect-ratio: 1;
         border-radius: 50%;
         background: var(--surface-strong);
       }
       .metric span { display: block; color: var(--muted); font-size: 11px; font-weight: 800; }
-      .metric strong { display: block; margin-top: 3px; font-size: 18px; line-height: 1.05; letter-spacing: 0; }
-      .metric small { display: block; margin-top: 4px; color: var(--muted); font-size: 10px; font-weight: 700; }
+      .metric strong { display: block; margin-top: 5px; font-size: 24px; line-height: 1.15; letter-spacing: 0; overflow-wrap: anywhere; }
+      .metric small { display: block; margin-top: 5px; color: var(--muted); font-size: 12px; font-weight: 500; }
+      .metric .macro-balance { font-size: 11px; color: var(--ink); }
       .metric[data-kind="carb"] { --tone: var(--orange); }
       .metric[data-kind="protein"] { --tone: var(--green); }
       .metric[data-kind="fat"] { --tone: var(--blue); }
-      .remaining-strip {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 1px;
-        overflow: hidden;
-        border: 0;
-        border-radius: 10px;
-        background: var(--row-line);
-      }
-      .remaining-item { padding: 8px 10px; background: var(--surface-strong); }
-      .remaining-item span { display: block; color: var(--muted); font-size: 11px; font-weight: 800; }
-      .remaining-item strong { display: block; margin-top: 4px; font-size: 17px; }
       .quick-add {
         display: flex;
         flex-direction: column;
@@ -250,7 +258,9 @@
         gap: 10px;
         margin-bottom: 10px;
       }
-      .section-title h2 { margin: 0; color: var(--blue); font-size: 17px; font-weight: 700; letter-spacing: -0.01em; }
+      .section-title h2 { margin: 0; color: var(--blue); font-size: 17px; font-weight: 700; letter-spacing: 0; }
+      .picker-heading { display: flex; align-items: center; gap: 8px; }
+      .picker-heading .icon-btn { width: 32px; min-height: 32px; font-size: 18px; color: var(--muted); border: 0; background: transparent; }
       .quick-add .section-title h2 { color: var(--green); font-size: 20px; }
       .category-tabs {
         display: grid;
@@ -282,15 +292,17 @@
         background: var(--surface-strong);
       }
       .food-search::before {
-        content: "⌕";
+        content: "";
         position: absolute;
         left: 12px;
         top: 50%;
         z-index: 1;
         transform: translateY(-50%);
-        color: var(--muted);
-        font-size: 17px;
-        font-weight: 900;
+        width: 16px;
+        height: 16px;
+        background: var(--muted);
+        mask: url('./assets/lucide/search.svg') center / contain no-repeat;
+        -webkit-mask: url('./assets/lucide/search.svg') center / contain no-repeat;
       }
       .food-buttons {
         display: flex;
@@ -304,8 +316,11 @@
       }
       .food-chip {
         border: 1px solid var(--line);
-        border-radius: 12px;
-        padding: 9px 13px;
+        border-radius: 8px;
+        padding: 11px 14px;
+        min-height: 44px;
+        max-width: 100%;
+        overflow-wrap: anywhere;
         color: var(--ink);
         background: var(--surface-strong);
         font-size: 14px;
@@ -321,21 +336,28 @@
       .food-chip strong { display: block; }
       .add-controls {
         display: grid;
-        grid-template-columns: minmax(0, 1fr) 122px 96px 92px;
+        grid-template-columns: minmax(0, 1fr) 132px;
         gap: 8px;
-        align-items: end;
+        align-items: center;
         border-top: 1px solid var(--quick-line);
         padding-top: 10px;
       }
-      .selected-food {
-        display: grid;
-        align-content: center;
-        min-height: 38px;
-        color: var(--muted);
-        font-size: 13px;
-        font-weight: 800;
-      }
-      .selected-food b { color: var(--ink); }
+      .meal-picker { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 3px; border-radius: 8px; background: var(--surface-strong); grid-column: 1 / -1; }
+      .meal-choice { border: 0; border-radius: 6px; min-height: 40px; background: transparent; color: var(--muted); font-weight: 600; }
+      .meal-choice[aria-pressed="true"] { background: var(--soft); color: var(--ink); box-shadow: var(--small-shadow); }
+      .food-preview { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 56px; padding: 5px 0; }
+      .preview-name { font-size: 15px; font-weight: 650; overflow-wrap: anywhere; }
+      .preview-macros { color: var(--muted); font-size: 11px; line-height: 1.6; margin-top: 4px; }
+      .preview-kcal { flex-shrink: 0; font-size: 22px; font-weight: 700; text-align: right; }
+      .preview-kcal small { display: block; color: var(--muted); font-size: 10px; font-weight: 500; }
+      .portion-stepper { display: flex; align-items: center; gap: 4px; }
+      .portion-stepper .icon-btn { flex: 0 0 44px; min-height: 44px; width: 44px; }
+      .portion-stepper input { width: 64px; padding: 8px 4px; text-align: center; border: 0; background: transparent; font-variant-numeric: tabular-nums; }
+      .portion-stepper input::-webkit-inner-spin-button { appearance: none; }
+      .portion-stepper span { color: var(--muted); font-size: 12px; }
+      .add-controls .primary { display: flex; align-items: center; justify-content: center; gap: 5px; min-height: 44px; background: #187b43; border-color: #187b43; }
+      .add-controls .primary .ui-icon { width: 16px; height: 16px; }
+      :root[data-theme="dark"] .add-controls .primary { color: #07180e; background: var(--green); border-color: var(--green); }
       label { display: grid; gap: 5px; }
       .field-label { color: var(--muted); font-size: 11px; font-weight: 900; }
       .meals { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 10px; }
@@ -343,7 +365,7 @@
       .meal-section { border: 1px solid var(--line); border-radius: 12px; background: var(--surface-strong); box-shadow: none; }
       .meal-head {
         display: grid;
-        grid-template-columns: 1fr auto;
+        grid-template-columns: auto minmax(0, 1fr) auto;
         align-items: center;
         gap: 12px;
         min-height: 50px;
@@ -368,7 +390,9 @@
       .meal-section[data-meal="noon"] .meal-dot { background: rgba(52, 120, 246, 0.28); }
       .meal-section[data-meal="evening"] .meal-dot { background: rgba(142, 141, 246, 0.3); }
       .meal-name { font-size: 15px; font-weight: 900; }
-      .meal-totals { min-width: 0; color: var(--muted); font-size: 11px; font-weight: 800; text-align: right; }
+      .meal-totals { min-width: 0; color: var(--muted); font-size: 11px; font-weight: 500; text-align: right; line-height: 1.6; }
+      .meal-totals strong { display: block; color: var(--ink); font-size: 19px; font-weight: 650; }
+      .meal-totals strong small { font-size: 10px; font-weight: 500; color: var(--muted); }
       .meal-content { padding: 0 11px; }
       .meal-empty { padding: 14px 2px; color: var(--empty); font-size: 13px; font-weight: 700; }
       .meal-row {
@@ -407,7 +431,8 @@
         padding: 12px 0 0;
         background: transparent;
       }
-      .tools { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+      .tools { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+      .tools details[open] { grid-column: 1 / -1; }
       .tools details:has(.library-form)[open] { grid-column: 1 / -1; }
       details {
         border: 1px solid var(--line);
@@ -433,11 +458,8 @@
       .detail-body { padding: 13px; }
       .settings-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 7px; }
       .settings-grid input { min-height: 34px; padding-block: 6px; }
-      .settings-note { margin: 8px 0 0; color: var(--muted); font-size: 11px; }
-      .summary-settings {
-        margin-top: 10px;
-        background: var(--surface-strong);
-      }
+      .summary-settings { margin-top: auto; background: transparent; border-width: 1px 0 0; border-radius: 0; }
+      .summary-settings summary { padding-inline: 0; color: var(--muted); font-size: 12px; font-weight: 600; }
       .summary-settings .detail-body { padding: 10px; }
       .sync-row { display: grid; grid-template-columns: minmax(180px, 1fr) auto auto; gap: 8px; align-items: end; }
       .sync-field { position: relative; }
@@ -448,6 +470,8 @@
       .data-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
       .calendar-head { display: grid; grid-template-columns: 34px 1fr 34px auto; gap: 7px; align-items: center; }
       .month-title { text-align: center; font-weight: 900; }
+      .month-stats { color: var(--muted); font-size: 12px; padding: 9px 1px 3px; }
+      .month-stats strong { color: var(--ink); font-weight: 600; }
       .calendar {
         display: grid;
         grid-template-columns: repeat(16, minmax(0, 1fr));
@@ -466,9 +490,16 @@
       }
       .day.active { border-color: var(--blue); color: #fff; background: var(--blue); box-shadow: 0 3px 10px color-mix(in srgb, var(--blue), transparent 68%); }
       .day.active .day-week, .day.active .day-kcal { color: rgba(255, 255, 255, 0.82); }
+      .day.has-record:not(.active) { background: color-mix(in srgb, var(--surface-strong), var(--green) 9%); }
+      .day.is-today .day-number { text-decoration: underline; text-underline-offset: 3px; }
       .day-number { display: block; font-size: 14px; font-weight: 900; }
       .day-week { display: block; margin-top: 2px; color: var(--muted); font-size: 10px; font-weight: 900; }
-      .day-kcal { display: block; margin-top: 3px; color: var(--orange); font-size: 9px; font-weight: 900; }
+      .day-kcal { display: block; margin-top: 3px; color: var(--ink); font-size: 10px; font-weight: 650; overflow-wrap: anywhere; }
+      .toast { position: fixed; z-index: 10; left: 50%; bottom: max(20px, env(safe-area-inset-bottom)); transform: translateX(-50%); display: flex; align-items: center; gap: 16px; width: max-content; max-width: calc(100% - 24px); padding: 10px 12px 10px 18px; border: 1px solid var(--line); border-radius: 12px; color: var(--ink); background: var(--surface-strong); box-shadow: var(--shadow); font-size: 13px; }
+      .toast[hidden] { display: none; }
+      .toast span { overflow-wrap: anywhere; }
+      .toast .btn { flex-shrink: 0; color: var(--blue); border: 0; }
+      input, strong { font-variant-numeric: tabular-nums; }
       .calendar-actions { display: contents; }
       .library-form {
         display: grid;
@@ -503,39 +534,64 @@
         .app-grid {
           grid-template-columns: minmax(0, 1fr);
           grid-template-areas:
-            "add"
             "summary"
+            "add"
             "meals"
             "tools";
         }
-        .quick-add { min-height: 440px; }
+        .quick-add { min-height: 0; }
         .summary-panel { min-height: 0; }
         .tools { grid-template-columns: repeat(2, minmax(0, 1fr)); min-width: 0; }
       }
       @media (max-width: 760px) {
-        main { width: min(100% - 16px, 820px); padding-top: 10px; }
-        .topbar { display: grid; gap: 10px; }
+        main { width: min(100% - 24px, 820px); padding-top: max(12px, env(safe-area-inset-top)); padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
+        .mobile-nav { display: grid; grid-template-columns: repeat(3, 1fr); position: fixed; z-index: 8; bottom: 0; left: 0; right: 0; padding: 7px 12px calc(7px + env(safe-area-inset-bottom)); border-top: 1px solid var(--line); background: var(--surface-strong); }
+        .mobile-nav button { display: flex; justify-content: center; align-items: center; gap: 7px; min-height: 44px; border: 0; border-radius: 8px; color: var(--muted); background: transparent; font-size: 12px; font-weight: 600; }
+        .mobile-nav button[aria-current="true"] { color: var(--blue); background: var(--soft); }
+        .toast { bottom: calc(76px + env(safe-area-inset-bottom)); }
+        .topbar { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px 8px; }
+        .brand-mark, .subtitle { display: none; }
+        .brand { gap: 0; }
         .quick-add { min-height: 0; }
-        .food-buttons { flex-basis: 180px; }
-        h1 { font-size: 23px; }
-        .header-actions { display: grid; grid-template-columns: 1fr auto; gap: 7px; }
-        .date-nav { justify-content: space-between; }
-        .date-nav input { flex: 1; width: auto; }
-        .metrics { grid-template-columns: 1fr; justify-items: center; }
-        .summary-side { width: 100%; }
+        .food-buttons { flex-basis: auto; min-height: 88px; }
+        h1 { font-size: 20px; }
+        .header-actions { display: contents; }
+        .date-nav { grid-row: 2; grid-column: 1 / -1; justify-content: space-between; }
+        .date-nav input { flex: 1; width: 0; font-size: 16px; }
+        .sync-shortcut { grid-row: 1; grid-column: 2; margin-right: 47px; padding-inline: 8px; font-size: 11px; }
+        .theme-toggle { grid-row: 1; grid-column: 2; justify-self: end; }
+        input, select { font-size: 16px; min-height: 44px; }
+        .settings-grid input { min-height: 44px; }
+        .icon-btn { width: 44px; min-height: 44px; }
+        .btn, .category-tab { min-height: 44px; }
+        .picker-heading .icon-btn { width: 44px; min-height: 44px; }
+        .panel-body, .quick-add { padding: 14px; }
+        .summary-panel .panel-body { gap: 10px; }
+        .metrics { gap: 12px; }
+        .summary-title h2 { font-size: 16px; }
+        .intake-main { grid-template-columns: 118px minmax(0, 1fr); gap: 20px; }
+        .calorie-ring { width: 118px; }
+        .calorie-ring::before { inset: 10px; }
+        .ring-center strong { font-size: 27px; }
+        .ring-center span { font-size: 10px; }
+        .calorie-context strong { font-size: 25px; margin-bottom: 6px; }
         .macro-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-        .remaining-strip { grid-template-columns: repeat(3, minmax(0, 1fr)); }
         .metric { padding-inline: 2px; }
-        .metric strong { font-size: 18px; }
-        .add-controls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-        .selected-food, .add-controls .btn { grid-column: 1 / -1; }
+        .metric { gap: 5px; padding-block: 2px; }
+        .metric strong { font-size: 21px; }
+        .metric small { font-size: 11px; }
+        .mini-ring { width: 40px; font-size: 10px; }
+        .mini-ring::before { width: 30px; }
+        .add-controls { grid-template-columns: minmax(0, 1fr) 126px; }
+        .portion-stepper { gap: 2px; }
+        .portion-stepper input { width: 48px; }
         .meals, .tools { grid-template-columns: minmax(0, 1fr); }
-        .meal-row { grid-template-columns: minmax(0, 1fr) auto 34px; }
+        .meal-row { grid-template-columns: minmax(0, 1fr) auto 44px; }
         .meal-head { grid-template-columns: auto minmax(0, 1fr) auto; gap: 7px; padding-inline: 9px; }
-        .meal-totals { font-size: 10px; line-height: 1.35; }
+        .meal-totals { font-size: 11px; line-height: 1.5; }
         .food-line { flex-wrap: wrap; }
         .row-macros { grid-column: 1 / 3; grid-row: 2; white-space: normal; }
-        .delete-btn { grid-column: 3; grid-row: 1 / 3; }
+        .delete-btn { grid-column: 3; grid-row: 1 / 3; width: 44px; height: 44px; }
         .sync-row { grid-template-columns: 1fr 1fr; }
         .sync-field { grid-column: 1 / -1; }
         .settings-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -545,6 +601,7 @@
         .library-macros { grid-column: 1 / 3; }
         .calendar { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
         .day { min-height: 43px; padding: 4px; }
+        .calendar-head { grid-template-columns: 44px minmax(0, 1fr) 44px auto; }
       }
     </style>
   </head>
@@ -555,7 +612,7 @@
           <div class="brand-mark" aria-hidden="true">✓</div>
           <div>
             <h1>每日热量追踪</h1>
-            <p class="subtitle">一眼看清今天，快速记录下一餐。</p>
+            <p class="subtitle" id="headerDate"></p>
           </div>
         </div>
         <div class="header-actions">
@@ -564,40 +621,39 @@
             <input id="selectedDate" type="date" aria-label="记录日期" />
             <button class="icon-btn" id="nextDay" type="button" aria-label="后一天"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="m9 18 6-6-6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
           </div>
-          <button class="icon-btn theme-toggle" id="themeToggle" type="button" aria-label="切换夜晚模式">夜</button>
+          <button class="btn sync-shortcut" id="syncShortcut" type="button" data-state="local" title="云同步与数据">仅本地</button>
+          <button class="icon-btn theme-toggle" id="themeToggle" type="button" aria-label="切换夜晚模式"><span class="ui-icon i-moon" aria-hidden="true"></span></button>
         </div>
       </header>
 
       <div class="app-grid">
-        <section class="quick-add" aria-label="添加食物">
+        <section class="quick-add" id="addSection" aria-label="添加食物">
           <div class="section-title">
-            <h2>添加食物</h2>
+            <div class="picker-heading"><h2>添加食物</h2><button class="icon-btn" id="openLibrary" type="button" aria-label="管理食物库" title="管理食物库"><span class="ui-icon i-settings" aria-hidden="true"></span></button></div>
             <span class="field-label" id="foodCount"></span>
           </div>
-          <div class="category-tabs" role="tablist" aria-label="食物分类">
-            <button class="category-tab active" data-category="carb" type="button">碳水</button>
-            <button class="category-tab" data-category="protein" type="button">蛋白质</button>
+          <div class="category-tabs" role="group" aria-label="食物分类">
+            <button class="category-tab active" data-category="carb" aria-pressed="true" type="button">碳水</button>
+            <button class="category-tab" data-category="protein" aria-pressed="false" type="button">蛋白质</button>
           </div>
           <label class="food-search">
-            <span class="field-label">搜索食物</span>
-            <input id="foodSearch" autocomplete="off" placeholder="输入名称，例如：鸡蛋、米饭" />
+            <input id="foodSearch" type="search" aria-label="搜索食物" autocomplete="off" placeholder="搜索食物" />
           </label>
           <div class="food-buttons" id="foodButtons"></div>
           <div class="add-controls">
-            <div class="selected-food" id="selectedFood">先点击上方食物</div>
-            <label>
-              <span class="field-label">餐次</span>
-              <select id="mealSelect"></select>
-            </label>
-            <label>
-              <span class="field-label">份数</span>
-              <input id="portion" type="number" min="0.1" step="0.5" value="1" />
-            </label>
-            <button class="btn primary" id="addDailyFood" type="button">添加</button>
+            <div class="meal-picker" id="mealPicker" role="group" aria-label="添加到餐次"></div>
+            <div class="food-preview" id="selectedFood"></div>
+            <div class="portion-stepper">
+              <button class="icon-btn" id="lessPortion" type="button" aria-label="减少半份" title="减少半份"><span class="ui-icon i-minus" aria-hidden="true"></span></button>
+              <input id="portion" type="number" inputmode="decimal" aria-label="添加份数" min="0.1" step="any" value="1" />
+              <span>份</span>
+              <button class="icon-btn" id="morePortion" type="button" aria-label="增加半份" title="增加半份"><span class="ui-icon i-plus" aria-hidden="true"></span></button>
+            </div>
+            <button class="btn primary" id="addDailyFood" type="button" disabled>+ 添加</button>
           </div>
         </section>
 
-        <section class="panel summary-panel" aria-label="今日摄入总览">
+        <section class="panel summary-panel" id="overviewSection" aria-label="今日摄入总览">
           <div class="panel-body">
             <div class="metrics" id="metrics"></div>
             <details class="summary-settings">
@@ -609,17 +665,16 @@
                   <label><span class="field-label">蛋白质系数</span><input id="proteinFactor" type="number" min="0" step="0.1" /></label>
                   <label><span class="field-label">脂肪系数</span><input id="fatFactor" type="number" min="0" step="0.1" /></label>
                 </div>
-                <p class="settings-note">目标继续按体重 × 系数自动计算，所有数字都可以修改。</p>
               </div>
             </details>
           </div>
         </section>
 
-        <section class="panel meals-panel" aria-label="当天三餐记录">
+        <section class="panel meals-panel" id="mealsSection" aria-label="当天三餐记录">
           <div class="panel-body">
             <div class="section-title">
-              <h2>当天记录</h2>
-              <span class="field-label">展开查看或删除食物</span>
+              <h2 id="recordTitle">当天记录</h2>
+              <span class="field-label" id="recordCount"></span>
             </div>
             <div class="meals" id="mealSummary"></div>
             <div class="calendar-strip-panel">
@@ -629,13 +684,14 @@
                 <button class="icon-btn" id="nextMonth" type="button" aria-label="下个月"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="m9 18 6-6-6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
                 <div class="calendar-actions"><button class="btn" id="todayBtn" type="button">今天</button></div>
               </div>
+              <div class="month-stats" id="monthStats"></div>
               <div class="calendar" id="calendar"></div>
             </div>
           </div>
         </section>
 
           <section class="tools" aria-label="低频工具">
-            <details>
+            <details id="syncDetails">
               <summary>云同步与数据</summary>
               <div class="detail-body">
                 <div class="sync-row">
@@ -656,7 +712,7 @@
               </div>
             </details>
 
-            <details>
+            <details id="libraryDetails">
               <summary>食物库与分类</summary>
               <div class="detail-body">
                 <div class="library-form">
@@ -677,6 +733,16 @@
           </section>
       </div>
     </main>
+    <nav class="mobile-nav" aria-label="日常记录导航">
+      <button type="button" data-jump="overviewSection" aria-current="true"><span class="ui-icon i-chart" aria-hidden="true"></span>总览</button>
+      <button type="button" data-jump="addSection"><span class="ui-icon i-plus" aria-hidden="true"></span>添加</button>
+      <button type="button" data-jump="mealsSection"><span class="ui-icon i-utensils" aria-hidden="true"></span>三餐</button>
+    </nav>
+    <div class="toast" id="addToast" hidden>
+      <span id="toastMessage" role="status" aria-live="polite"></span>
+      <button class="btn" id="undoAdd" type="button">撤销</button>
+      <button class="icon-btn" id="closeToast" type="button" aria-label="关闭提示" title="关闭提示"><span class="ui-icon i-x" aria-hidden="true"></span></button>
+    </div>
 
     <script type="module">
       import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
@@ -720,7 +786,7 @@
       const deviceId = localStorage.getItem(deviceIdKey) || crypto.randomUUID();
       localStorage.setItem(deviceIdKey, deviceId);
       const numberValue = (value) => Number.parseFloat(value) || 0;
-      const format = (value, digits = 1) => Number(value || 0).toFixed(digits).replace(/\.0$/, "");
+      const format = (value, digits = 1) => String(Number(Number(value || 0).toFixed(digits)));
       const meals = [
         { id: "morning", name: "早上" },
         { id: "noon", name: "中午" },
@@ -742,6 +808,9 @@
       let visibleMonth = new Date(today.getFullYear(), today.getMonth(), 1);
       let activeCategory = "carb";
       let selectedFoodId = "";
+      let selectedMeal = today.getHours() < 11 ? "morning" : today.getHours() < 17 ? "noon" : "evening";
+      let lastAdded = null;
+      let toastTimer = null;
       let authReady = false;
       let activeSyncCode = "";
       let stopCloudListener = null;
@@ -752,14 +821,17 @@
       const $ = (selector) => document.querySelector(selector);
       const els = {
         selectedDate: $("#selectedDate"), prevDay: $("#prevDay"), nextDay: $("#nextDay"),
-        themeToggle: $("#themeToggle"),
+        themeToggle: $("#themeToggle"), headerDate: $("#headerDate"),
         metrics: $("#metrics"), foodCount: $("#foodCount"), foodSearch: $("#foodSearch"), foodButtons: $("#foodButtons"),
-        selectedFood: $("#selectedFood"), mealSelect: $("#mealSelect"), portion: $("#portion"),
+        selectedFood: $("#selectedFood"), mealPicker: $("#mealPicker"), portion: $("#portion"),
+        lessPortion: $("#lessPortion"), morePortion: $("#morePortion"), openLibrary: $("#openLibrary"),
+        addToast: $("#addToast"), toastMessage: $("#toastMessage"), undoAdd: $("#undoAdd"), closeToast: $("#closeToast"),
+        recordTitle: $("#recordTitle"), recordCount: $("#recordCount"),
         addDailyFood: $("#addDailyFood"), mealSummary: $("#mealSummary"),
         weight: $("#weight"), carbFactor: $("#carbFactor"), proteinFactor: $("#proteinFactor"), fatFactor: $("#fatFactor"),
-        syncCode: $("#syncCode"), syncStatus: $("#syncStatus"), createSyncCode: $("#createSyncCode"), connectSync: $("#connectSync"),
+        syncCode: $("#syncCode"), syncStatus: $("#syncStatus"), syncShortcut: $("#syncShortcut"), syncDetails: $("#syncDetails"), libraryDetails: $("#libraryDetails"), createSyncCode: $("#createSyncCode"), connectSync: $("#connectSync"),
         exportData: $("#exportData"), importData: $("#importData"), importFile: $("#importFile"), resetAll: $("#resetAll"),
-        calendar: $("#calendar"), monthTitle: $("#monthTitle"), prevMonth: $("#prevMonth"), nextMonth: $("#nextMonth"), todayBtn: $("#todayBtn"),
+        calendar: $("#calendar"), monthTitle: $("#monthTitle"), monthStats: $("#monthStats"), prevMonth: $("#prevMonth"), nextMonth: $("#nextMonth"), todayBtn: $("#todayBtn"),
         newName: $("#newName"), newCarb: $("#newCarb"), newProtein: $("#newProtein"), newFat: $("#newFat"),
         newKcal: $("#newKcal"), newCategory: $("#newCategory"), addLibraryFood: $("#addLibraryFood"), libraryList: $("#libraryList"),
       };
@@ -811,7 +883,9 @@
       function setTheme(theme) {
         const normalized = theme === "dark" ? "dark" : "light";
         document.documentElement.dataset.theme = normalized;
-        els.themeToggle.textContent = normalized === "dark" ? "日" : "夜";
+        els.themeToggle.innerHTML = `<span class="ui-icon i-${normalized === "dark" ? "sun" : "moon"}" aria-hidden="true"></span>`;
+        document.querySelector('meta[name="theme-color"]').content = normalized === "dark" ? "#000000" : "#f2f2f7";
+        els.themeToggle.setAttribute("aria-label", normalized === "dark" ? "切换到日间模式" : "切换到夜晚模式");
         els.themeToggle.setAttribute("aria-pressed", normalized === "dark" ? "true" : "false");
         els.themeToggle.setAttribute("title", normalized === "dark" ? "切换到日间模式" : "切换到夜晚模式");
         localStorage.setItem(themeKey, normalized);
@@ -842,48 +916,70 @@
         const goal = goalValues();
         const percent = (current, target) => target > 0 ? Math.min((current / target) * 100, 100) : 0;
         const fullPercent = (current, target) => target > 0 ? Math.round((current / target) * 100) : 0;
-        const remaining = (target, current) => Math.max(target - current, 0);
+        const balance = (target, current, digits, unit) => `${current > target ? "超出" : "还剩"} ${format(Math.abs(target - current), digits)} ${unit}`;
+        const isToday = selectedDate === toDateKey(new Date());
         const macroItems = [
           ["carb", "碳水", eaten.carb, goal.carb, "g", 1],
           ["protein", "蛋白质", eaten.protein, goal.protein, "g", 1],
           ["fat", "脂肪", eaten.fat, goal.fat, "g", 1],
         ];
         els.metrics.innerHTML = `
-          <div class="calorie-ring" style="--pct:${percent(eaten.kcal, goal.kcal)}">
-            <div class="ring-center">
-              <strong>${format(eaten.kcal, 0)}</strong>
-              <span>/ ${format(goal.kcal, 0)} kcal</span>
-              <span>今日摄入</span>
-            </div>
+          <div class="summary-title">
+            <div><h2>${isToday ? "今日" : "当日"}摄入总览</h2><p>${selectedDate} · 已记录 ${dailyRows().length} 项</p></div>
           </div>
-          <div class="summary-side">
-            <div class="summary-title">
-              <div>
-                <h2>今日摄入总览</h2>
-                <p>${selectedDate} · 目标由体重和系数自动计算</p>
+          <div class="intake-main">
+            <div class="calorie-ring" style="--pct:${percent(eaten.kcal, goal.kcal)}" role="img" aria-label="热量 ${format(eaten.kcal, 0)} 千卡，目标 ${format(goal.kcal, 0)} 千卡">
+              <div class="ring-center">
+                <strong>${format(eaten.kcal, 0)}</strong>
+                <span>kcal · 已摄入</span>
               </div>
             </div>
-            <div class="macro-grid">
+            <div class="calorie-context">
+              <span>${eaten.kcal > goal.kcal ? "超出目标" : "距目标还剩"}</span>
+              <strong>${format(Math.abs(goal.kcal - eaten.kcal), 0)} <small>kcal</small></strong>
+              <small>目标 ${format(goal.kcal, 0)} kcal · ${fullPercent(eaten.kcal, goal.kcal)}%</small>
+            </div>
+          </div>
+          <div class="macro-grid">
               ${macroItems.map(([kind, name, current, target, unit, digits]) => `
                 <div class="metric" data-kind="${kind}">
-                  <div class="mini-ring" style="--pct:${percent(current, target)}" data-percent="${fullPercent(current, target)}%"></div>
+                  <div class="mini-ring" style="--pct:${percent(current, target)}" data-percent="${fullPercent(current, target)}%" aria-hidden="true"></div>
                   <div>
                     <span>${name}</span>
                     <strong>${format(current, digits)} ${unit}</strong>
                     <small>目标 ${format(target, digits)} ${unit}</small>
+                    <small class="macro-balance">${balance(target, current, digits, unit)}</small>
                   </div>
                 </div>
               `).join("")}
             </div>
-            <div class="remaining-strip">
-              <div class="remaining-item"><span>剩余热量</span><strong>${format(remaining(goal.kcal, eaten.kcal), 0)} kcal</strong></div>
-              <div class="remaining-item"><span>已完成</span><strong>${fullPercent(eaten.kcal, goal.kcal)}%</strong></div>
-              <div class="remaining-item"><span>体重</span><strong>${format(state.settings.weight, 1)} kg</strong></div>
-            </div>
-          </div>
         `;
       }
+      function renderMealPicker() {
+        els.mealPicker.innerHTML = meals.map((meal) => `<button type="button" class="meal-choice" data-add-meal="${meal.id}" aria-pressed="${meal.id === selectedMeal}">${meal.name}</button>`).join("");
+        renderFoodPreview();
+      }
+      function renderFoodPreview() {
+        const selected = state.library.find((food) => food.id === selectedFoodId);
+        const portion = Number(els.portion.value);
+        const valid = Number.isFinite(portion) && portion >= 0.1;
+        els.addDailyFood.disabled = !selected || !valid;
+        els.lessPortion.disabled = valid && portion <= 0.1;
+        const meal = meals.find((item) => item.id === selectedMeal);
+        els.addDailyFood.innerHTML = `<span class="ui-icon i-plus" aria-hidden="true"></span>添加到${meal.name}`;
+        if (!selected) {
+          els.selectedFood.innerHTML = `<div class="preview-name" style="color:var(--muted)">未选择食物</div>`;
+          return;
+        }
+        if (!valid) {
+          els.selectedFood.innerHTML = `<div><div class="preview-name">${escapeHtml(selected.name)}</div><div class="preview-macros">份数需大于或等于 0.1</div></div>`;
+          return;
+        }
+        const preview = updateRowPortion({ baseCarb: selected.carb, baseProtein: selected.protein, baseFat: selected.fat, baseKcal: selected.kcal }, portion);
+        els.selectedFood.innerHTML = `<div><div class="preview-name">${escapeHtml(selected.name)} × ${format(portion, 2)} 份</div><div class="preview-macros">碳水 ${format(preview.carb)}g · 蛋白质 ${format(preview.protein)}g · 脂肪 ${format(preview.fat)}g</div></div><div class="preview-kcal">${format(preview.kcal, 0)}<small>kcal</small></div>`;
+      }
       function renderFoodButtons() {
+        const focusedId = document.activeElement?.dataset.foodId;
         const query = searchText(els.foodSearch.value);
         const baseFoods = state.library.filter((food) => food.category === activeCategory);
         const foods = sortFoodsByName(
@@ -892,16 +988,18 @@
         if (!foods.some((food) => food.id === selectedFoodId)) selectedFoodId = "";
         els.foodCount.textContent = query ? `${foods.length} 个结果` : `${foods.length} 项 · 拼音 A-Z`;
         els.foodButtons.innerHTML = foods.length
-          ? foods.map((food) => `<button class="food-chip ${food.id === selectedFoodId ? "active" : ""}" data-food-id="${food.id}" type="button"><strong>${escapeHtml(food.name)}</strong></button>`).join("")
+          ? foods.map((food) => `<button class="food-chip ${food.id === selectedFoodId ? "active" : ""}" data-food-id="${escapeHtml(food.id)}" aria-pressed="${food.id === selectedFoodId}" type="button"><strong>${escapeHtml(food.name)}</strong></button>`).join("")
           : `<div class="empty">${query ? "没有找到这个食物" : "这个分类还没有食物"}</div>`;
-        const selected = state.library.find((food) => food.id === selectedFoodId);
-        els.selectedFood.innerHTML = selected ? `已选择：<b>${escapeHtml(selected.name)}</b>` : "先点击上方食物";
+        renderFoodPreview();
+        if (focusedId) [...els.foodButtons.querySelectorAll("button")].find((button) => button.dataset.foodId === focusedId)?.focus({ preventScroll: true });
       }
       function renderMeals() {
         const openMealIds = collectOpenMealIds(
           els.mealSummary.querySelectorAll("details.meal-section"),
         );
         const rows = dailyRows();
+        els.recordTitle.textContent = selectedDate === toDateKey(new Date()) ? "今天的三餐" : "当天三餐";
+        els.recordCount.textContent = `${rows.length} 项 · ${format(sumRows(rows).kcal, 0)} kcal`;
         els.mealSummary.innerHTML = meals.map((meal) => {
           const mealRows = rows.filter((row) => row.meal === meal.id);
           const total = sumRows(mealRows);
@@ -909,18 +1007,18 @@
             <div class="meal-row" data-row="${row.id}">
               <div class="food-line">
                 <span class="food-name">${escapeHtml(row.name)}</span>
-                <span class="portion-inline">× <input class="portion-input" data-portion type="number" min="0.1" step="0.5" value="${format(row.portion)}" aria-label="${escapeHtml(row.name)}份数" /> 份</span>
+                <span class="portion-inline">× <input class="portion-input" data-portion type="number" inputmode="decimal" min="0.1" step="any" value="${format(row.portion, 2)}" aria-label="${escapeHtml(row.name)}份数" /> 份</span>
               </div>
               <div class="row-kcal">${format(row.kcal, 0)} <span>kcal</span></div>
               <div class="row-macros">${format(row.carb)}g 碳水 · ${format(row.protein)}g 蛋白质 · ${format(row.fat)}g 脂肪</div>
               <button class="delete-btn" data-delete="${row.id}" type="button" aria-label="删除${escapeHtml(row.name)}">×</button>
             </div>
-          `).join("") : `<div class="meal-empty">还没记录，先从上方添加食物。</div>`;
+          `).join("") : `<div class="meal-empty">暂无记录</div>`;
           return `
             <details class="meal-section" data-meal="${meal.id}" ${openMealIds.has(meal.id) ? "open" : ""}>
               <summary class="meal-head">
                 <span class="meal-title"><span class="meal-dot" aria-hidden="true"></span><span class="meal-name">${meal.name}</span></span>
-                <span class="meal-totals">${format(total.carb)}g 碳水 · ${format(total.protein)}g 蛋白质 · ${format(total.fat)}g 脂肪 · ${format(total.kcal, 0)} kcal</span>
+                <span class="meal-totals"><strong>${format(total.kcal, 0)} <small>kcal · ${mealRows.length} 项</small></strong>碳水 ${format(total.carb)}g · 蛋白质 ${format(total.protein)}g · 脂肪 ${format(total.fat)}g</span>
               </summary>
               <div class="meal-content">${content}</div>
             </details>
@@ -953,16 +1051,23 @@
         els.monthTitle.textContent = `${year}年${month + 1}月`;
         const daysInMonth = new Date(year, month + 1, 0).getDate();
         const weekdays = ["日", "一", "二", "三", "四", "五", "六"];
+        let monthKcal = 0;
+        let loggedDays = 0;
         const cells = Array.from({ length: daysInMonth }, (_, index) => {
           const date = new Date(year, month, index + 1);
           const key = toDateKey(date);
-          const kcal = sumRows(state.days[key] || []).kcal;
-          return `<button class="day ${key === selectedDate ? "active" : ""}" data-date="${key}" type="button"><span class="day-number">${date.getDate()}</span><span class="day-week">${weekdays[date.getDay()]}</span><span class="day-kcal">${kcal ? `${format(kcal, 0)}` : ""}</span></button>`;
+          const rows = state.days[key] || [];
+          const kcal = sumRows(rows).kcal;
+          monthKcal += kcal;
+          if (rows.length) loggedDays++;
+          return `<button class="day ${key === selectedDate ? "active" : ""} ${rows.length ? "has-record" : ""} ${key === toDateKey(new Date()) ? "is-today" : ""}" data-date="${key}" type="button" aria-label="${key}，${rows.length ? `${format(kcal, 0)} 千卡` : "暂无记录"}" aria-pressed="${key === selectedDate}"><span class="day-number">${date.getDate()}</span><span class="day-week">${weekdays[date.getDay()]}</span><span class="day-kcal">${rows.length ? format(kcal, 0) : "—"}</span></button>`;
         }).join("");
         els.calendar.innerHTML = cells;
+        els.monthStats.innerHTML = `本月 <strong>${format(monthKcal, 0)}</strong> kcal · 已记录 <strong>${loggedDays}</strong> 天${loggedDays ? ` · 日均 <strong>${format(monthKcal / loggedDays, 0)}</strong> kcal` : ""}`;
       }
       function renderAll() {
         els.selectedDate.value = selectedDate;
+        els.headerDate.textContent = dateKeyToDate(selectedDate).toLocaleDateString("zh-CN", { month: "long", day: "numeric", weekday: "long" });
         renderMetrics();
         renderFoodButtons();
         renderMeals();
@@ -972,6 +1077,7 @@
       }
       function changeSelectedDate(dateKey) {
         selectedDate = dateKey;
+        els.mealSummary.querySelectorAll("details").forEach((detail) => { detail.open = false; });
         const date = dateKeyToDate(dateKey);
         visibleMonth = new Date(date.getFullYear(), date.getMonth(), 1);
         renderAll();
@@ -986,7 +1092,10 @@
         button.addEventListener("click", () => {
           activeCategory = button.dataset.category;
           selectedFoodId = "";
-          document.querySelectorAll("[data-category]").forEach((tab) => tab.classList.toggle("active", tab === button));
+          document.querySelectorAll("[data-category]").forEach((tab) => {
+            tab.classList.toggle("active", tab === button);
+            tab.setAttribute("aria-pressed", String(tab === button));
+          });
           renderFoodButtons();
         });
       });
@@ -997,12 +1106,78 @@
         renderFoodButtons();
       });
       els.foodSearch.addEventListener("input", renderFoodButtons);
+      els.portion.addEventListener("input", renderFoodPreview);
+      function stepPortion(amount) {
+        const current = Number(els.portion.value);
+        els.portion.value = format(Math.max(0.1, (Number.isFinite(current) ? current : 1) + amount), 2);
+        renderFoodPreview();
+      }
+      els.lessPortion.addEventListener("click", () => stepPortion(-0.5));
+      els.morePortion.addEventListener("click", () => stepPortion(0.5));
+      els.mealPicker.addEventListener("click", (event) => {
+        const button = event.target.closest("[data-add-meal]");
+        if (!button) return;
+        selectedMeal = button.dataset.addMeal;
+        els.mealPicker.querySelectorAll("button").forEach((choice) => choice.setAttribute("aria-pressed", String(choice === button)));
+        renderFoodPreview();
+      });
+      function openTool(detail) {
+        detail.open = true;
+        detail.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth", block: "start" });
+        detail.querySelector("summary").focus({ preventScroll: true });
+      }
+      els.openLibrary.addEventListener("click", () => openTool(els.libraryDetails));
+      els.syncShortcut.addEventListener("click", () => openTool(els.syncDetails));
+      const jumpButtons = [...document.querySelectorAll("[data-jump]")];
+      jumpButtons.forEach((button) => button.addEventListener("click", () => {
+        document.getElementById(button.dataset.jump).scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth", block: "start" });
+      }));
+      let scrollFrame = null;
+      window.addEventListener("scroll", () => {
+        if (scrollFrame !== null) return;
+        scrollFrame = requestAnimationFrame(() => {
+          const current = [...jumpButtons].reverse().find((button) => document.getElementById(button.dataset.jump).getBoundingClientRect().top <= 80) || jumpButtons[0];
+          jumpButtons.forEach((button) => button.setAttribute("aria-current", String(button === current)));
+          scrollFrame = null;
+        });
+      }, { passive: true });
+      function dismissToast() {
+        clearTimeout(toastTimer);
+        els.addToast.hidden = true;
+        lastAdded = null;
+      }
+      function scheduleToastDismiss() {
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => {
+          if (!els.addToast.contains(document.activeElement)) dismissToast();
+        }, 8000);
+      }
+      els.addToast.addEventListener("mouseenter", () => clearTimeout(toastTimer));
+      els.addToast.addEventListener("mouseleave", scheduleToastDismiss);
+      els.addToast.addEventListener("focusin", () => clearTimeout(toastTimer));
+      els.addToast.addEventListener("focusout", scheduleToastDismiss);
+      function deleteDailyFood(date, id) {
+        const rows = state.days[date] || [];
+        if (!rows.some((row) => row.id === id)) return;
+        state.syncMeta.rowTombstones[id] = syncStamp();
+        state.days[date] = rows.filter((row) => row.id !== id);
+        saveState();
+        renderMetrics();
+        renderMeals();
+        renderCalendar();
+      }
+      els.closeToast.addEventListener("click", dismissToast);
+      els.undoAdd.addEventListener("click", () => {
+        // Remember the original date: navigation must not undo another day's record.
+        if (lastAdded) deleteDailyFood(lastAdded.date, lastAdded.id);
+        dismissToast();
+      });
       els.addDailyFood.addEventListener("click", () => {
         const food = state.library.find((item) => item.id === selectedFoodId);
-        const portion = Math.max(numberValue(els.portion.value), 0.1);
-        if (!food) return;
+        const portion = Number(els.portion.value);
+        if (!food || !Number.isFinite(portion) || portion < 0.1) return;
         const row = {
-          id: uid(), foodId: food.id, meal: els.mealSelect.value, name: food.name, portion,
+          id: uid(), foodId: food.id, meal: selectedMeal, name: food.name, portion,
           baseCarb: food.carb, baseProtein: food.protein, baseFat: food.fat, baseKcal: food.kcal,
           carb: 0, protein: 0, fat: 0, kcal: 0,
           ...syncStamp(),
@@ -1015,6 +1190,10 @@
         renderFoodButtons();
         renderMeals();
         renderCalendar();
+        lastAdded = { date: selectedDate, id: row.id };
+        els.toastMessage.textContent = `${food.name} × ${format(portion, 2)} 份 · 已添加到${meals.find((meal) => meal.id === selectedMeal).name}`;
+        els.addToast.hidden = false;
+        scheduleToastDismiss();
       });
       els.mealSummary.addEventListener("change", (event) => {
         const input = event.target.closest("[data-portion]");
@@ -1031,12 +1210,8 @@
       els.mealSummary.addEventListener("click", (event) => {
         const button = event.target.closest("[data-delete]");
         if (!button) return;
-        state.syncMeta.rowTombstones[button.dataset.delete] = syncStamp();
-        state.days[selectedDate] = dailyRows().filter((row) => row.id !== button.dataset.delete);
-        saveState();
-        renderMetrics();
-        renderMeals();
-        renderCalendar();
+        deleteDailyFood(selectedDate, button.dataset.delete);
+        if (lastAdded?.id === button.dataset.delete) dismissToast();
       });
       ["weight", "carbFactor", "proteinFactor", "fatFactor"].forEach((key) => {
         els[key].addEventListener("input", () => {
@@ -1138,6 +1313,7 @@
           if (!imported) return alert("导入失败：文件格式不正确。");
           if (!confirm("导入会覆盖当前记录，确定继续吗？")) return;
           state = imported;
+          dismissToast();
           saveState();
           renderAll();
           alert("导入成功。");
@@ -1156,6 +1332,7 @@
         Object.values(state.days).flat().forEach((row) => { rowTombstones[row.id] = deleted; });
         const restored = syncStamp();
         state = normalizeTrackerState(defaults, defaults);
+        dismissToast();
         state.library.forEach((food) => Object.assign(food, restored));
         state.syncMeta = {
           foodTombstones,
@@ -1177,6 +1354,8 @@
       function setSyncStatus(text, status = "local") {
         els.syncStatus.textContent = text;
         els.syncStatus.dataset.state = status;
+        els.syncShortcut.textContent = text;
+        els.syncShortcut.dataset.state = status;
       }
       function scheduleCloudSave() {
         if (!authReady || !activeSyncCode) return;
@@ -1262,7 +1441,7 @@
         if (savedCode) connectCloudSync(savedCode);
       });
 
-      els.mealSelect.innerHTML = meals.map((meal) => `<option value="${meal.id}">${meal.name}</option>`).join("");
+      renderMealPicker();
       setTheme(localStorage.getItem(themeKey) || "light");
       renderAll();
     </script>
