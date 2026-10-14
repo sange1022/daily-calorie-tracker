@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import * as core from "../tracker-core.js";
 
 import {
   collectOpenMealIds,
@@ -12,6 +13,88 @@ import {
   updateFoodName,
   updateRowPortion,
 } from "../tracker-core.js";
+
+const presetFood = { id: "oats", name: "燕麦", carb: 60, protein: 10, fat: 6, kcal: 350, gramsPerPortion: 100 };
+const presetExample = { id: "breakfast", name: "早餐搭配", meal: "morning", items: [{ foodId: "oats", food: presetFood, amount: 40, unit: "g" }], updatedAt: 10, updatedBy: "A" };
+const presetState = (presets = []) => ({ settings: { weight: 90 }, library: [presetFood], days: {}, presets });
+
+test("migrates existing tracker records with an empty preset list", () => {
+  const migrated = normalizeTrackerState({ settings: {}, library: [], days: { "2026-10-14": [{ id: "old", kcal: 70 }] } });
+  assert.deepEqual(migrated.presets, []);
+  assert.equal(migrated.days["2026-10-14"][0].kcal, 70);
+});
+
+test("builds gram-based preset rows with exact nutrition and fresh IDs", () => {
+  const rows = core.buildPresetRows(presetExample, [presetFood], { meal: "noon", multiplier: 2 });
+  assert.equal(rows[0].meal, "noon");
+  assert.equal(rows[0].portion, 0.8);
+  assert.equal(rows[0].unit, "g");
+  assert.equal(rows[0].gramsPerPortion, 100);
+  assert.deepEqual(sumNutrition(rows), { carb: 48, protein: 8, fat: 4.8, kcal: 280 });
+  assert.notEqual(rows[0].id, core.buildPresetRows(presetExample, [presetFood])[0].id);
+});
+
+test("keeps small gram quantities below one tenth of a portion", () => {
+  const preset = { ...presetExample, items: [{ ...presetExample.items[0], amount: 5 }] };
+  const row = core.buildPresetRows(preset, [presetFood])[0];
+  assert.equal(row.portion, 0.05);
+  assert.equal(row.kcal, 17.5);
+  const restored = normalizeDailyRow(JSON.parse(JSON.stringify(row)));
+  assert.equal(restored.portion, 0.05);
+  assert.equal(restored.gramsPerPortion, 100);
+  updateRowPortion(restored, 0.02);
+  assert.equal(restored.kcal, 7);
+});
+
+test("rejects gram conversion with no known serving weight", () => {
+  const food = { ...presetFood, gramsPerPortion: 0 };
+  const preset = { ...presetExample, items: [{ foodId: food.id, food, unit: "g", amount: 40 }] };
+  assert.throws(() => core.buildPresetRows(preset, [food]), /重量/);
+});
+
+test("uses current food names and falls back to saved food if removed", () => {
+  assert.equal(core.buildPresetRows(presetExample, [{ ...presetFood, name: "原味燕麦" }])[0].name, "原味燕麦");
+  assert.equal(core.buildPresetRows(presetExample, [])[0].kcal, 140);
+});
+
+test("does not partially build a preset with an invalid ingredient", () => {
+  const preset = { ...presetExample, items: [...presetExample.items, { ...presetExample.items[0], amount: 0 }] };
+  assert.throws(() => core.buildPresetRows(preset, [presetFood]), /用量/);
+});
+
+test("merges preset union, newer edits and deletion tombstones", () => {
+  const left = presetState([presetExample]);
+  const right = presetState([{ ...presetExample, id: "lunch" }, { ...presetExample, name: "新版早餐", updatedAt: 20 }]);
+  const merged = mergeTrackerStates(left, right);
+  assert.equal(merged.presets.length, 2);
+  assert.equal(merged.presets.find(preset => preset.id === "breakfast").name, "新版早餐");
+  assert.deepEqual(mergeTrackerStates(right, left), merged);
+  const deleted = presetState([]);
+  deleted.syncMeta = { presetTombstones: { breakfast: { updatedAt: 30, updatedBy: "A" } } };
+  const next = mergeTrackerStates(merged, deleted);
+  assert.deepEqual(next.presets.map(preset => preset.id), ["lunch"]);
+  assert.equal(next.syncMeta.presetTombstones.breakfast.updatedAt, 30);
+  assert.deepEqual(mergeTrackerStates(next, merged), next);
+});
+
+test("preserves presets and gram references through backup normalization", () => {
+  const result = normalizeTrackerState(JSON.parse(JSON.stringify(presetState([presetExample]))));
+  assert.equal(result.presets[0].items[0].amount, 40);
+  assert.equal(result.library[0].gramsPerPortion, 100);
+});
+
+test("steps food portions through half-portion increments", () => {
+  let portion = 0.5;
+  const steps = [portion];
+  for (let index = 0; index < 3; index++) {
+    portion = core.stepPortionAmount(portion, 1);
+    steps.push(portion);
+  }
+  assert.deepEqual(steps, [0.5, 1, 1.5, 2]);
+  assert.equal(core.stepPortionAmount(0.5, -1), 0.5);
+  assert.equal(core.stepPortionAmount(1.25, 1), 1.5);
+  assert.equal(core.stepPortionAmount(1.25, -1), 1);
+});
 
 test("updates a food name while rejecting empty names", () => {
   const food = { id: "egg", name: "鸡蛋" };

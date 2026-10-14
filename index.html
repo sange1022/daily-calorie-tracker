@@ -107,6 +107,9 @@
         transition: border-color 160ms ease, box-shadow 160ms ease, background-color 220ms ease;
       }
       input::placeholder { color: color-mix(in srgb, var(--muted), transparent 18%); }
+      label:has(> select) { position: relative; }
+      label:has(> select)::after { content: ""; position: absolute; right: 11px; bottom: 13px; width: 16px; height: 16px; background: var(--muted); mask: url('./assets/lucide/chevron-down.svg') center / contain no-repeat; -webkit-mask: url('./assets/lucide/chevron-down.svg') center / contain no-repeat; pointer-events: none; }
+      label > select { appearance: none; -webkit-appearance: none; padding-right: 32px; }
       input:focus-visible, select:focus-visible, button:focus-visible, summary:focus-visible {
         outline: 3px solid rgba(36, 117, 217, 0.2);
         outline-offset: 2px;
@@ -264,7 +267,7 @@
       .quick-add .section-title h2 { color: var(--green); font-size: 20px; }
       .category-tabs {
         display: grid;
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: 6px;
         padding: 4px;
         border: 1px solid var(--quick-line);
@@ -334,6 +337,27 @@
         background: rgba(79, 218, 121, 0.16);
       }
       .food-chip strong { display: block; }
+      .food-buttons.preset-list { display: grid; grid-template-columns: 1fr; align-content: start; }
+      .preset-item { display: grid; grid-template-columns: minmax(0, 1fr) 40px 40px; gap: 6px; align-items: center; }
+      .preset-item .food-chip { width: 100%; }
+      .preset-item small { display: block; margin-top: 5px; color: var(--muted); font-size: 11px; font-weight: 500; line-height: 1.5; }
+      #newPreset[hidden] { display: none; }
+      dialog { width: min(660px, calc(100% - 24px)); max-height: min(88dvh, 860px); padding: 0; border: 1px solid var(--line); border-radius: 14px; color: var(--ink); background: var(--surface-strong); box-shadow: var(--shadow); }
+      dialog::backdrop { background: rgba(0, 0, 0, .4); }
+      .preset-form { display: flex; flex-direction: column; max-height: min(88dvh, 860px); }
+      .dialog-head { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; border-bottom: 1px solid var(--line); }
+      .dialog-head h2 { margin: 0; font-size: 18px; }
+      .dialog-body { padding: 18px; overflow-y: auto; }
+      .preset-fields { display: grid; grid-template-columns: minmax(0, 1fr) 110px; gap: 12px; }
+      .preset-ingredients { margin: 8px 0 14px; }
+      .preset-ingredient { display: grid; grid-template-columns: minmax(0, 1fr) 80px 66px 105px 40px; gap: 8px; padding: 14px 0; border-bottom: 1px solid var(--line); align-items: end; }
+      .ingredient-nutrition { grid-column: 1 / -1; margin: 0; color: var(--muted); font-size: 11px; line-height: 1.5; }
+      .preset-footer { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 18px; border-top: 1px solid var(--line); }
+      .preset-footer .btn { flex-shrink: 0; }
+      .preset-total { font-size: 13px; line-height: 1.6; }
+      .preset-total small { display: block; color: var(--muted); font-size: 11px; }
+      .form-error { color: var(--red); margin: 12px 0 0; font-size: 13px; }
+      .food-preview > div:first-child { min-width: 0; }
       .add-controls {
         display: grid;
         grid-template-columns: minmax(0, 1fr) 132px;
@@ -343,8 +367,11 @@
         padding-top: 10px;
       }
       .meal-picker { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 3px; border-radius: 8px; background: var(--surface-strong); grid-column: 1 / -1; }
-      .meal-choice { border: 0; border-radius: 6px; min-height: 40px; background: transparent; color: var(--muted); font-weight: 600; }
-      .meal-choice[aria-pressed="true"] { background: var(--soft); color: var(--ink); box-shadow: var(--small-shadow); }
+      .meal-choice { display: flex; justify-content: center; align-items: center; gap: 6px; border: 0; border-radius: 6px; min-height: 44px; background: transparent; color: var(--muted); font-weight: 600; }
+      .meal-check { visibility: hidden; font-size: 14px; }
+      .meal-choice[aria-pressed="true"] { background: #187b43; color: #fff; box-shadow: var(--small-shadow); }
+      .meal-choice[aria-pressed="true"] .meal-check { visibility: visible; }
+      :root[data-theme="dark"] .meal-choice[aria-pressed="true"] { background: var(--green); color: #07180e; }
       .food-preview { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 56px; padding: 5px 0; }
       .preview-name { font-size: 15px; font-weight: 650; overflow-wrap: anywhere; }
       .preview-macros { color: var(--muted); font-size: 11px; line-height: 1.6; margin-top: 4px; }
@@ -565,6 +592,12 @@
         .icon-btn { width: 44px; min-height: 44px; }
         .btn, .category-tab { min-height: 44px; }
         .picker-heading .icon-btn { width: 44px; min-height: 44px; }
+        .preset-item { grid-template-columns: minmax(0, 1fr) 44px 44px; }
+        .preset-ingredient { grid-template-columns: minmax(0, 1fr) 90px 44px; }
+        .preset-ingredient label:first-child { grid-column: 1 / -1; }
+        .preset-ingredient label:nth-child(4) { grid-column: 1 / 3; }
+        .preset-ingredient label:nth-child(3) { grid-column: 2 / 4; }
+        .dialog-body, .dialog-head, .preset-footer { padding: 14px; }
         .panel-body, .quick-add { padding: 14px; }
         .summary-panel .panel-body { gap: 10px; }
         .metrics { gap: 12px; }
@@ -631,10 +664,12 @@
           <div class="section-title">
             <div class="picker-heading"><h2>添加食物</h2><button class="icon-btn" id="openLibrary" type="button" aria-label="管理食物库" title="管理食物库"><span class="ui-icon i-settings" aria-hidden="true"></span></button></div>
             <span class="field-label" id="foodCount"></span>
+            <button class="btn" id="newPreset" type="button" hidden>+ 新建套餐</button>
           </div>
           <div class="category-tabs" role="group" aria-label="食物分类">
             <button class="category-tab active" data-category="carb" aria-pressed="true" type="button">碳水</button>
             <button class="category-tab" data-category="protein" aria-pressed="false" type="button">蛋白质</button>
+            <button class="category-tab" data-category="presets" aria-pressed="false" type="button">套餐</button>
           </div>
           <label class="food-search">
             <input id="foodSearch" type="search" aria-label="搜索食物" autocomplete="off" placeholder="搜索食物" />
@@ -733,6 +768,21 @@
           </section>
       </div>
     </main>
+    <dialog id="presetDialog" aria-labelledby="presetDialogTitle">
+      <form class="preset-form" id="presetForm" novalidate>
+        <header class="dialog-head"><h2 id="presetDialogTitle">新建套餐</h2><button class="icon-btn" id="cancelPreset" type="button" aria-label="关闭套餐编辑" title="关闭"><span class="ui-icon i-x" aria-hidden="true"></span></button></header>
+        <div class="dialog-body">
+          <div class="preset-fields">
+            <label><span class="field-label">套餐名称</span><input id="presetName" placeholder="例如：早餐套餐" maxlength="60" /></label>
+            <label><span class="field-label">默认餐次</span><select id="presetMeal"></select></label>
+          </div>
+          <div class="preset-ingredients" id="presetIngredients"></div>
+          <button class="btn" id="addPresetIngredient" type="button">+ 添加食物</button>
+          <p class="form-error" id="presetError" role="alert"></p>
+        </div>
+        <footer class="preset-footer"><div class="preset-total" id="presetTotal"></div><button class="btn primary" type="submit">保存套餐</button></footer>
+      </form>
+    </dialog>
     <nav class="mobile-nav" aria-label="日常记录导航">
       <button type="button" data-jump="overviewSection" aria-current="true"><span class="ui-icon i-chart" aria-hidden="true"></span>总览</button>
       <button type="button" data-jump="addSection"><span class="ui-icon i-plus" aria-hidden="true"></span>添加</button>
@@ -749,16 +799,19 @@
       import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
       import { doc, getFirestore, onSnapshot, runTransaction, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
       import {
+        buildPresetRows,
         collectOpenMealIds,
         inferFoodCategory,
         mergeTrackerStates,
         normalizeFood,
+        normalizePreset,
         normalizeTrackerState,
         sortFoodsByName,
+        stepPortionAmount,
         sumNutrition,
         updateFoodName,
         updateRowPortion,
-      } from "./tracker-core.js";
+      } from "./tracker-core.js?v=20261014-presets";
 
       const firebaseConfig = {
         apiKey: "AIzaSyDbLCcDs-Gk6ev2zSUT4cdYAgvpqUzSUEY",
@@ -808,6 +861,8 @@
       let visibleMonth = new Date(today.getFullYear(), today.getMonth(), 1);
       let activeCategory = "carb";
       let selectedFoodId = "";
+      let selectedPresetId = "";
+      let presetDraft = null;
       let selectedMeal = today.getHours() < 11 ? "morning" : today.getHours() < 17 ? "noon" : "evening";
       let lastAdded = null;
       let toastTimer = null;
@@ -824,6 +879,8 @@
         themeToggle: $("#themeToggle"), headerDate: $("#headerDate"),
         metrics: $("#metrics"), foodCount: $("#foodCount"), foodSearch: $("#foodSearch"), foodButtons: $("#foodButtons"),
         selectedFood: $("#selectedFood"), mealPicker: $("#mealPicker"), portion: $("#portion"),
+        newPreset: $("#newPreset"), presetDialog: $("#presetDialog"), presetForm: $("#presetForm"), presetName: $("#presetName"), presetMeal: $("#presetMeal"),
+        presetIngredients: $("#presetIngredients"), presetError: $("#presetError"), presetTotal: $("#presetTotal"), addPresetIngredient: $("#addPresetIngredient"), cancelPreset: $("#cancelPreset"),
         lessPortion: $("#lessPortion"), morePortion: $("#morePortion"), openLibrary: $("#openLibrary"),
         addToast: $("#addToast"), toastMessage: $("#toastMessage"), undoAdd: $("#undoAdd"), closeToast: $("#closeToast"),
         recordTitle: $("#recordTitle"), recordCount: $("#recordCount"),
@@ -956,15 +1013,79 @@
         `;
       }
       function renderMealPicker() {
-        els.mealPicker.innerHTML = meals.map((meal) => `<button type="button" class="meal-choice" data-add-meal="${meal.id}" aria-pressed="${meal.id === selectedMeal}">${meal.name}</button>`).join("");
+        els.mealPicker.innerHTML = meals.map((meal) => `<button type="button" class="meal-choice" data-add-meal="${meal.id}" aria-pressed="${meal.id === selectedMeal}"><span class="meal-check" aria-hidden="true">✓</span>${meal.name}</button>`).join("");
         renderFoodPreview();
       }
+      function presetDescription(preset, multiplier = 1) {
+        return preset.items.map((item) => {
+          const food = state.library.find((entry) => entry.id === item.foodId) || item.food;
+          return `${food.name} ${format(item.amount * multiplier, 2)}${item.unit === "g" ? "g" : "份"}`;
+        }).join(" · ");
+      }
+      function showPresetEditor(id = "") {
+        const preset = state.presets.find((entry) => entry.id === id);
+        presetDraft = preset ? structuredClone(preset) : { id: "", name: "", meal: selectedMeal, items: [{ foodId: "", food: null, amount: 1, unit: "portion" }] };
+        // Refresh library values in the draft without modifying saved presets.
+        presetDraft.items.forEach((item) => {
+          const food = state.library.find((entry) => entry.id === item.foodId);
+          if (food) item.food = structuredClone(food);
+        });
+        $("#presetDialogTitle").textContent = preset ? "编辑套餐" : "新建套餐";
+        els.presetName.value = presetDraft.name;
+        els.presetMeal.value = presetDraft.meal;
+        els.presetError.textContent = "";
+        renderPresetEditor();
+        els.presetDialog.showModal();
+      }
+      function renderPresetEditor() {
+        els.presetIngredients.innerHTML = presetDraft.items.map((item, index) => {
+          const foods = [...state.library];
+          if (item.food && !foods.some((food) => food.id === item.foodId)) foods.push(item.food);
+          const food = item.food;
+          return `<div class="preset-ingredient" data-ingredient="${index}">
+            <label><span class="field-label">食物</span><select data-preset-food aria-label="第${index + 1}项食物"><option value="">选择食物</option>${sortFoodsByName(foods).map((entry) => `<option value="${escapeHtml(entry.id)}" ${entry.id === item.foodId ? "selected" : ""}>${escapeHtml(entry.name)}</option>`).join("")}</select></label>
+            <label><span class="field-label">用量</span><input data-preset-amount type="number" inputmode="decimal" min="0.1" step="any" value="${item.amount || ""}" aria-label="第${index + 1}项用量" /></label>
+            <label><span class="field-label">单位</span><select data-preset-unit aria-label="第${index + 1}项单位"><option value="portion" ${item.unit !== "g" ? "selected" : ""}>份</option><option value="g" ${item.unit === "g" ? "selected" : ""}>克</option></select></label>
+            <label><span class="field-label">每份重量 g</span><input data-preset-weight type="number" inputmode="decimal" min="0.1" step="any" value="${food?.gramsPerPortion || ""}" ${item.unit !== "g" ? "disabled" : ""} placeholder="未设置" aria-label="第${index + 1}项每份重量" /></label>
+            <button class="icon-btn" data-remove-ingredient="${index}" type="button" aria-label="移除第${index + 1}项食物" title="移除食物"><span class="ui-icon i-x" aria-hidden="true"></span></button>
+            ${food ? `<p class="ingredient-nutrition">每份：碳水 ${format(food.carb)}g · 蛋白质 ${format(food.protein)}g · 脂肪 ${format(food.fat)}g · ${format(food.kcal, 0)} kcal</p>` : ""}
+          </div>`;
+        }).join("");
+        renderPresetTotal();
+      }
+      function renderPresetTotal() {
+        try {
+          const total = sumRows(buildPresetRows(presetDraft, []));
+          els.presetTotal.innerHTML = `合计 <strong>${format(total.kcal, 0)} kcal</strong><small>碳水 ${format(total.carb)}g · 蛋白质 ${format(total.protein)}g · 脂肪 ${format(total.fat)}g</small>`;
+        } catch {
+          els.presetTotal.textContent = "合计 — kcal";
+        }
+      }
       function renderFoodPreview() {
+        if (selectedPresetId) {
+          const preset = state.presets.find((entry) => entry.id === selectedPresetId);
+          const multiplier = Number(els.portion.value);
+          if (preset) {
+            try {
+              const total = sumRows(buildPresetRows(preset, state.library, { multiplier }));
+              els.addDailyFood.disabled = false;
+              els.lessPortion.disabled = multiplier <= 0.5;
+              els.addDailyFood.innerHTML = `<span class="ui-icon i-plus" aria-hidden="true"></span>添加到${meals.find((meal) => meal.id === selectedMeal).name}`;
+              els.selectedFood.innerHTML = `<div><div class="preview-name">${escapeHtml(preset.name)} × ${format(multiplier, 2)} 套</div><div class="preview-macros">${escapeHtml(presetDescription(preset, multiplier))}</div><div class="preview-macros">碳水 ${format(total.carb)}g · 蛋白质 ${format(total.protein)}g · 脂肪 ${format(total.fat)}g</div></div><div class="preview-kcal">${format(total.kcal, 0)}<small>kcal</small></div>`;
+              return;
+            } catch (error) {
+              els.addDailyFood.disabled = true;
+              els.selectedFood.innerHTML = `<div class="preview-macros">${escapeHtml(error.message)}</div>`;
+              return;
+            }
+          }
+          selectedPresetId = "";
+        }
         const selected = state.library.find((food) => food.id === selectedFoodId);
         const portion = Number(els.portion.value);
         const valid = Number.isFinite(portion) && portion >= 0.1;
         els.addDailyFood.disabled = !selected || !valid;
-        els.lessPortion.disabled = valid && portion <= 0.1;
+        els.lessPortion.disabled = valid && portion <= 0.5;
         const meal = meals.find((item) => item.id === selectedMeal);
         els.addDailyFood.innerHTML = `<span class="ui-icon i-plus" aria-hidden="true"></span>添加到${meal.name}`;
         if (!selected) {
@@ -980,7 +1101,27 @@
       }
       function renderFoodButtons() {
         const focusedId = document.activeElement?.dataset.foodId;
+        const focusedPresetId = document.activeElement?.dataset.presetId;
         const query = searchText(els.foodSearch.value);
+        const isPresets = activeCategory === "presets";
+        els.newPreset.hidden = !isPresets;
+        els.foodCount.hidden = isPresets;
+        els.foodSearch.placeholder = isPresets ? "搜索套餐或食物" : "搜索食物";
+        els.foodButtons.classList.toggle("preset-list", isPresets);
+        els.portion.nextElementSibling.textContent = isPresets ? "套" : "份";
+        els.portion.setAttribute("aria-label", isPresets ? "添加套餐数量" : "添加份数");
+        if (isPresets) {
+          const presets = sortFoodsByName(state.presets.filter((preset) => !query || searchText(`${preset.name} ${presetDescription(preset)}`).includes(query)));
+          if (!presets.some((preset) => preset.id === selectedPresetId)) selectedPresetId = "";
+          els.foodButtons.innerHTML = presets.length ? presets.map((preset) => `<div class="preset-item">
+            <button type="button" class="food-chip ${preset.id === selectedPresetId ? "active" : ""}" data-preset-id="${escapeHtml(preset.id)}" aria-pressed="${preset.id === selectedPresetId}"><strong>${escapeHtml(preset.name)}</strong><small>${escapeHtml(presetDescription(preset))}</small></button>
+            <button type="button" class="icon-btn" data-edit-preset="${escapeHtml(preset.id)}" aria-label="编辑${escapeHtml(preset.name)}" title="编辑套餐"><span class="ui-icon i-settings" aria-hidden="true"></span></button>
+            <button type="button" class="icon-btn" data-delete-preset="${escapeHtml(preset.id)}" aria-label="删除${escapeHtml(preset.name)}" title="删除套餐"><span class="ui-icon i-x" aria-hidden="true"></span></button>
+          </div>`).join("") : `<div class="empty">${query ? "没有找到这个套餐" : "暂无套餐"}</div>`;
+          renderFoodPreview();
+          if (focusedPresetId) [...els.foodButtons.querySelectorAll("[data-preset-id]")].find((button) => button.dataset.presetId === focusedPresetId)?.focus({ preventScroll: true });
+          return;
+        }
         const baseFoods = state.library.filter((food) => food.category === activeCategory);
         const foods = sortFoodsByName(
           query ? baseFoods.filter((food) => searchText(food.name).includes(query)) : baseFoods,
@@ -1007,7 +1148,7 @@
             <div class="meal-row" data-row="${row.id}">
               <div class="food-line">
                 <span class="food-name">${escapeHtml(row.name)}</span>
-                <span class="portion-inline">× <input class="portion-input" data-portion type="number" inputmode="decimal" min="0.1" step="any" value="${format(row.portion, 2)}" aria-label="${escapeHtml(row.name)}份数" /> 份</span>
+                <span class="portion-inline">${row.unit === "g" ? "" : "×"} <input class="portion-input" data-portion type="number" inputmode="decimal" min="0.1" step="any" value="${format(row.unit === "g" ? row.portion * row.gramsPerPortion : row.portion, 2)}" aria-label="${escapeHtml(row.name)}${row.unit === "g" ? "克数" : "份数"}" /> ${row.unit === "g" ? "g" : "份"}</span>
               </div>
               <div class="row-kcal">${format(row.kcal, 0)} <span>kcal</span></div>
               <div class="row-macros">${format(row.carb)}g 碳水 · ${format(row.protein)}g 蛋白质 · ${format(row.fat)}g 脂肪</div>
@@ -1092,6 +1233,9 @@
         button.addEventListener("click", () => {
           activeCategory = button.dataset.category;
           selectedFoodId = "";
+          selectedPresetId = "";
+          els.portion.value = "1";
+          els.foodSearch.value = "";
           document.querySelectorAll("[data-category]").forEach((tab) => {
             tab.classList.toggle("active", tab === button);
             tab.setAttribute("aria-pressed", String(tab === button));
@@ -1100,16 +1244,106 @@
         });
       });
       els.foodButtons.addEventListener("click", (event) => {
+        const edit = event.target.closest("[data-edit-preset]");
+        if (edit) return showPresetEditor(edit.dataset.editPreset);
+        const remove = event.target.closest("[data-delete-preset]");
+        if (remove) {
+          if (!confirm("删除这个套餐？当天已记录的食物不会删除。")) return;
+          state.syncMeta.presetTombstones[remove.dataset.deletePreset] = syncStamp();
+          state.presets = state.presets.filter((preset) => preset.id !== remove.dataset.deletePreset);
+          saveState();
+          renderFoodButtons();
+          return;
+        }
+        const presetButton = event.target.closest("[data-preset-id]");
+        if (presetButton) {
+          selectedPresetId = presetButton.dataset.presetId;
+          selectedFoodId = "";
+          selectedMeal = state.presets.find((preset) => preset.id === selectedPresetId).meal;
+          renderMealPicker();
+          renderFoodButtons();
+          return;
+        }
         const button = event.target.closest("[data-food-id]");
         if (!button) return;
         selectedFoodId = button.dataset.foodId;
         renderFoodButtons();
       });
+      els.newPreset.addEventListener("click", () => showPresetEditor());
+      els.cancelPreset.addEventListener("click", () => els.presetDialog.close());
+      els.presetDialog.addEventListener("close", () => { presetDraft = null; });
+      els.addPresetIngredient.addEventListener("click", () => {
+        presetDraft.items.push({ foodId: "", food: null, amount: 1, unit: "portion" });
+        renderPresetEditor();
+        els.presetIngredients.lastElementChild.querySelector("select").focus();
+      });
+      els.presetIngredients.addEventListener("click", (event) => {
+        const remove = event.target.closest("[data-remove-ingredient]");
+        if (!remove) return;
+        presetDraft.items.splice(Number(remove.dataset.removeIngredient), 1);
+        renderPresetEditor();
+      });
+      els.presetIngredients.addEventListener("input", (event) => {
+        const container = event.target.closest("[data-ingredient]");
+        if (!container) return;
+        const item = presetDraft.items[Number(container.dataset.ingredient)];
+        if (event.target.matches("[data-preset-amount]")) item.amount = Number(event.target.value);
+        if (event.target.matches("[data-preset-weight]") && item.food) {
+          const weight = Number(event.target.value);
+          presetDraft.items.filter((entry) => entry.foodId === item.foodId && entry.food).forEach((entry) => { entry.food.gramsPerPortion = weight; });
+        }
+        els.presetError.textContent = "";
+        renderPresetTotal();
+      });
+      els.presetIngredients.addEventListener("change", (event) => {
+        const container = event.target.closest("[data-ingredient]");
+        if (!container) return;
+        const index = Number(container.dataset.ingredient);
+        const item = presetDraft.items[index];
+        if (event.target.matches("[data-preset-food]")) {
+          const food = state.library.find((entry) => entry.id === event.target.value) || (item.food?.id === event.target.value ? item.food : null);
+          item.foodId = food?.id || "";
+          item.food = food ? structuredClone(food) : null;
+          const existing = presetDraft.items.find((entry) => entry !== item && entry.foodId === item.foodId && entry.food);
+          if (existing) item.food.gramsPerPortion = existing.food.gramsPerPortion;
+          item.unit = food?.gramsPerPortion ? "g" : "portion";
+          item.amount = food?.gramsPerPortion || 1;
+          renderPresetEditor();
+          els.presetIngredients.children[index].querySelector("[data-preset-amount]").focus();
+        } else if (event.target.matches("[data-preset-unit]")) {
+          item.unit = event.target.value;
+          renderPresetEditor();
+        }
+      });
+      els.presetForm.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const name = els.presetName.value.trim();
+        if (!name) { els.presetError.textContent = "请输入套餐名称"; els.presetName.focus(); return; }
+        try { buildPresetRows(presetDraft, []); }
+        catch (error) { els.presetError.textContent = error.message; return; }
+        const preset = normalizePreset({ ...presetDraft, id: presetDraft.id || uid(), name, meal: els.presetMeal.value, ...syncStamp() });
+        preset.items.forEach((item) => {
+          const food = state.library.find((entry) => entry.id === item.foodId);
+          if (food && item.unit === "g" && food.gramsPerPortion !== item.food.gramsPerPortion) {
+            food.gramsPerPortion = item.food.gramsPerPortion;
+            Object.assign(food, syncStamp());
+          }
+        });
+        const index = state.presets.findIndex((entry) => entry.id === preset.id);
+        if (index < 0) state.presets.push(preset);
+        else state.presets[index] = preset;
+        selectedPresetId = preset.id;
+        selectedMeal = preset.meal;
+        els.foodSearch.value = "";
+        saveState();
+        els.presetDialog.close();
+        renderMealPicker();
+        renderLibrary();
+      });
       els.foodSearch.addEventListener("input", renderFoodButtons);
       els.portion.addEventListener("input", renderFoodPreview);
       function stepPortion(amount) {
-        const current = Number(els.portion.value);
-        els.portion.value = format(Math.max(0.1, (Number.isFinite(current) ? current : 1) + amount), 2);
+        els.portion.value = String(stepPortionAmount(els.portion.value, amount));
         renderFoodPreview();
       }
       els.lessPortion.addEventListener("click", () => stepPortion(-0.5));
@@ -1156,11 +1390,13 @@
       els.addToast.addEventListener("mouseleave", scheduleToastDismiss);
       els.addToast.addEventListener("focusin", () => clearTimeout(toastTimer));
       els.addToast.addEventListener("focusout", scheduleToastDismiss);
-      function deleteDailyFood(date, id) {
+      function deleteDailyFoods(date, ids) {
         const rows = state.days[date] || [];
-        if (!rows.some((row) => row.id === id)) return;
-        state.syncMeta.rowTombstones[id] = syncStamp();
-        state.days[date] = rows.filter((row) => row.id !== id);
+        const removed = rows.filter((row) => ids.includes(row.id));
+        if (!removed.length) return;
+        const stamp = syncStamp();
+        removed.forEach((row) => { state.syncMeta.rowTombstones[row.id] = stamp; });
+        state.days[date] = rows.filter((row) => !ids.includes(row.id));
         saveState();
         renderMetrics();
         renderMeals();
@@ -1169,10 +1405,20 @@
       els.closeToast.addEventListener("click", dismissToast);
       els.undoAdd.addEventListener("click", () => {
         // Remember the original date: navigation must not undo another day's record.
-        if (lastAdded) deleteDailyFood(lastAdded.date, lastAdded.id);
+        if (lastAdded) deleteDailyFoods(lastAdded.date, lastAdded.ids);
         dismissToast();
       });
       els.addDailyFood.addEventListener("click", () => {
+        if (selectedPresetId) {
+          const preset = state.presets.find((entry) => entry.id === selectedPresetId);
+          if (!preset) return;
+          try {
+            const rows = buildPresetRows(preset, state.library, { meal: selectedMeal, multiplier: Number(els.portion.value) });
+            rows.forEach((row) => Object.assign(row, syncStamp()));
+            appendDailyRows(rows, `${preset.name} · ${rows.length} 项食物`);
+          } catch { renderFoodPreview(); }
+          return;
+        }
         const food = state.library.find((item) => item.id === selectedFoodId);
         const portion = Number(els.portion.value);
         if (!food || !Number.isFinite(portion) || portion < 0.1) return;
@@ -1183,24 +1429,29 @@
           ...syncStamp(),
         };
         updateRowPortion(row, portion);
-        dailyRows().push(row);
+        appendDailyRows([row], `${food.name} × ${format(portion, 2)} 份`);
+      });
+      function appendDailyRows(rows, message) {
+        dailyRows().push(...rows);
         els.portion.value = "1";
         saveState();
         renderMetrics();
         renderFoodButtons();
         renderMeals();
         renderCalendar();
-        lastAdded = { date: selectedDate, id: row.id };
-        els.toastMessage.textContent = `${food.name} × ${format(portion, 2)} 份 · 已添加到${meals.find((meal) => meal.id === selectedMeal).name}`;
+        lastAdded = { date: selectedDate, ids: rows.map((row) => row.id) };
+        els.toastMessage.textContent = `${message} · 已添加到${meals.find((meal) => meal.id === selectedMeal).name}`;
         els.addToast.hidden = false;
         scheduleToastDismiss();
-      });
+      }
       els.mealSummary.addEventListener("change", (event) => {
         const input = event.target.closest("[data-portion]");
         if (!input) return;
         const row = dailyRows().find((item) => item.id === input.closest("[data-row]").dataset.row);
         if (!row) return;
-        updateRowPortion(row, input.value);
+        const amount = Number(input.value);
+        if (!Number.isFinite(amount) || amount < 0.1) { renderMeals(); return; }
+        updateRowPortion(row, row.unit === "g" ? amount / row.gramsPerPortion : amount);
         Object.assign(row, syncStamp());
         saveState();
         renderMetrics();
@@ -1210,8 +1461,11 @@
       els.mealSummary.addEventListener("click", (event) => {
         const button = event.target.closest("[data-delete]");
         if (!button) return;
-        deleteDailyFood(selectedDate, button.dataset.delete);
-        if (lastAdded?.id === button.dataset.delete) dismissToast();
+        deleteDailyFoods(selectedDate, [button.dataset.delete]);
+        if (lastAdded?.ids.includes(button.dataset.delete)) {
+          lastAdded.ids = lastAdded.ids.filter((id) => id !== button.dataset.delete);
+          if (!lastAdded.ids.length) dismissToast();
+        }
       });
       ["weight", "carbFactor", "proteinFactor", "fatFactor"].forEach((key) => {
         els[key].addEventListener("input", () => {
@@ -1328,6 +1582,8 @@
         const deleted = syncStamp();
         const foodTombstones = { ...state.syncMeta.foodTombstones };
         const rowTombstones = { ...state.syncMeta.rowTombstones };
+        const presetTombstones = { ...state.syncMeta.presetTombstones };
+        state.presets.forEach((preset) => { presetTombstones[preset.id] = deleted; });
         state.library.forEach((food) => { foodTombstones[food.id] = deleted; });
         Object.values(state.days).flat().forEach((row) => { rowTombstones[row.id] = deleted; });
         const restored = syncStamp();
@@ -1337,6 +1593,7 @@
         state.syncMeta = {
           foodTombstones,
           rowTombstones,
+          presetTombstones,
           settings: restored,
           labels: restored,
         };
@@ -1441,6 +1698,7 @@
         if (savedCode) connectCloudSync(savedCode);
       });
 
+      els.presetMeal.innerHTML = meals.map((meal) => `<option value="${meal.id}">${meal.name}</option>`).join("");
       renderMealPicker();
       setTheme(localStorage.getItem(themeKey) || "light");
       renderAll();

@@ -48,6 +48,7 @@ export function normalizeFood(item = {}) {
     protein: numberValue(item.protein),
     fat: numberValue(item.fat),
     kcal: numberValue(item.kcal),
+    gramsPerPortion: Math.max(0, numberValue(item.gramsPerPortion)),
     updatedAt: numberValue(item.updatedAt),
     updatedBy: String(item.updatedBy || ""),
   };
@@ -58,7 +59,10 @@ export function normalizeFood(item = {}) {
 }
 
 export function normalizeDailyRow(row = {}) {
-  const portion = Math.max(numberValue(row.portion) || 1, 0.1);
+  const gramsPerPortion = Math.max(0, numberValue(row.gramsPerPortion));
+  const unit = row.unit === "g" && gramsPerPortion > 0 ? "g" : "portion";
+  const minimum = unit === "g" ? 0.1 / gramsPerPortion : 0.1;
+  const portion = Math.max(numberValue(row.portion) || 1, minimum);
   const hasBaseValues = ["baseCarb", "baseProtein", "baseFat", "baseKcal"].some(
     (key) => row[key] !== undefined,
   );
@@ -69,6 +73,8 @@ export function normalizeDailyRow(row = {}) {
     meal: validMeals.has(row.meal) ? row.meal : "morning",
     name: String(row.name || "未命名食物"),
     portion,
+    unit,
+    gramsPerPortion,
     baseCarb: numberValue(hasBaseValues ? row.baseCarb : row.carb) / divisor,
     baseProtein: numberValue(hasBaseValues ? row.baseProtein : row.protein) / divisor,
     baseFat: numberValue(hasBaseValues ? row.baseFat : row.fat) / divisor,
@@ -83,13 +89,60 @@ export function normalizeDailyRow(row = {}) {
 }
 
 export function updateRowPortion(row, portion) {
-  const nextPortion = Math.max(numberValue(portion), 0.1);
+  const minimum = row.unit === "g" && row.gramsPerPortion > 0 ? 0.1 / row.gramsPerPortion : 0.1;
+  const nextPortion = Math.max(numberValue(portion), minimum);
   row.portion = nextPortion;
   row.carb = numberValue((row.baseCarb * nextPortion).toFixed(2));
   row.protein = numberValue((row.baseProtein * nextPortion).toFixed(2));
   row.fat = numberValue((row.baseFat * nextPortion).toFixed(2));
   row.kcal = numberValue((row.baseKcal * nextPortion).toFixed(1));
   return row;
+}
+
+export function stepPortionAmount(value, direction) {
+  const parsed = Number(value);
+  const current = Number.isFinite(parsed) ? parsed : 1;
+  const next = direction > 0
+    ? (Math.floor(current * 2 + 1e-8) + 1) / 2
+    : (Math.ceil(current * 2 - 1e-8) - 1) / 2;
+  return Math.max(0.5, next);
+}
+
+export function normalizePreset(preset = {}) {
+  return {
+    id: preset.id || uid(),
+    name: String(preset.name || "未命名套餐"),
+    meal: validMeals.has(preset.meal) ? preset.meal : "morning",
+    items: (Array.isArray(preset.items) ? preset.items : []).map((item) => ({
+      foodId: String(item.foodId || item.food?.id || ""),
+      food: normalizeFood(item.food || { id: item.foodId }),
+      amount: numberValue(item.amount),
+      unit: item.unit === "g" ? "g" : "portion",
+    })),
+    ...normalizeStamp(preset),
+  };
+}
+
+export function buildPresetRows(preset, library = [], options = {}) {
+  const multiplier = options.multiplier ?? 1;
+  if (!Number.isFinite(multiplier) || multiplier < 0.1) throw new Error("套餐份数需大于或等于 0.1");
+  if (!preset.items?.length) throw new Error("请选择套餐里的食物");
+  return preset.items.map((item) => {
+    const food = library.find((entry) => entry.id === item.foodId) || item.food;
+    if (!food) throw new Error("套餐食物已不存在，请编辑套餐");
+    if (!Number.isFinite(item.amount) || item.amount < 0.1) throw new Error(`${food.name}的用量需大于或等于 0.1`);
+    const gramsPerPortion = numberValue(food.gramsPerPortion);
+    if (item.unit === "g" && (!Number.isFinite(gramsPerPortion) || gramsPerPortion <= 0)) throw new Error(`请设置${food.name}的每份重量`);
+    const amount = item.amount * multiplier;
+    const portion = item.unit === "g" ? amount / gramsPerPortion : amount;
+    const row = {
+      id: uid(), foodId: food.id, name: food.name,
+      meal: validMeals.has(options.meal) ? options.meal : preset.meal,
+      unit: item.unit === "g" ? "g" : "portion", gramsPerPortion,
+      baseCarb: food.carb, baseProtein: food.protein, baseFat: food.fat, baseKcal: food.kcal,
+    };
+    return updateRowPortion(row, portion);
+  });
 }
 
 export function sortFoodsByName(foods) {
@@ -120,6 +173,7 @@ export function normalizeTrackerState(imported, defaults = {}) {
     labels: { ...(defaults.labels || {}), ...(imported.labels || {}) },
     settings: { ...(defaults.settings || {}), ...imported.settings },
     library: imported.library.map(normalizeFood),
+    presets: (Array.isArray(imported.presets) ? imported.presets : []).map(normalizePreset),
     days: Object.fromEntries(
       Object.entries(imported.days || {}).map(([date, rows]) => [
         date,
@@ -129,6 +183,7 @@ export function normalizeTrackerState(imported, defaults = {}) {
     syncMeta: {
       foodTombstones: normalizeTombstones(imported.syncMeta?.foodTombstones),
       rowTombstones: normalizeTombstones(imported.syncMeta?.rowTombstones),
+      presetTombstones: normalizeTombstones(imported.syncMeta?.presetTombstones),
       settings: normalizeStamp(imported.syncMeta?.settings),
       labels: normalizeStamp(imported.syncMeta?.labels),
     },
@@ -186,6 +241,7 @@ export function mergeTrackerStates(left, right, defaults = {}) {
     local.syncMeta.rowTombstones,
     remote.syncMeta.rowTombstones,
   );
+  const presetTombstones = mergeTombstones(local.syncMeta.presetTombstones, remote.syncMeta.presetTombstones);
   const dates = [...new Set([...Object.keys(local.days), ...Object.keys(remote.days)])].sort();
   const days = Object.fromEntries(dates.map((date) => [
     date,
@@ -212,10 +268,13 @@ export function mergeTrackerStates(left, right, defaults = {}) {
     labels,
     library: mergeEntities(local.library, remote.library, normalizeFood)
       .filter((food) => !foodTombstones[food.id] || compareStamps(food, foodTombstones[food.id]) > 0),
+    presets: mergeEntities(local.presets, remote.presets, normalizePreset)
+      .filter((preset) => !presetTombstones[preset.id] || compareStamps(preset, presetTombstones[preset.id]) > 0),
     days,
     syncMeta: {
       foodTombstones,
       rowTombstones,
+      presetTombstones,
       settings: compareVersions(local.syncMeta.settings, remote.syncMeta.settings) >= 0
         ? local.syncMeta.settings
         : remote.syncMeta.settings,
